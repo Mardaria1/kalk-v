@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KALK V Gamyba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface-2:#232735;
+  --border:#2d3244;--text:#e4e6ef;--text-muted:#8b8fa7;
+  --accent:#3b82f6;--accent-hover:#2563eb;
+  --gas:#f59e0b;--gas-bg:rgba(245,158,11,.08);
+  --elec:#06b6d4;--elec-bg:rgba(6,182,212,.08);
+  --temp:#10b981;--temp-bg:rgba(16,185,129,.08);
+  --diff:#a78bfa;--danger:#ef4444;
+  --ok:#10b981;--ok-bg:rgba(16,185,129,.12);
+  --fail-bg:rgba(239,68,68,.12);
+  --radius:10px;
+  --font:'DM Sans',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh}
+.app{max-width:900px;margin:0 auto;padding:16px;padding-bottom:100px}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.header-left h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,var(--accent),var(--elec));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-left .subtitle{color:var(--text-muted);font-size:.78rem;margin-top:2px}
+.status-badge{display:flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok);padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:600}
+.status-dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Nav */
+.nav{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius);padding:4px;margin-bottom:16px}
+.nav button{flex:1;padding:10px;border:none;background:none;color:var(--text-muted);font-family:var(--font);font-size:.82rem;font-weight:600;border-radius:7px;cursor:pointer;transition:all .2s}
+.nav button.active{background:var(--accent);color:#fff}
+
+/* Form */
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border);margin-bottom:16px}
+.card h2{font-size:1rem;font-weight:700;margin-bottom:14px}
+.section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;padding:7px 12px;border-radius:7px;display:flex;align-items:center;gap:6px}
+.section-icon{font-size:.95rem}
+.gas-section{color:var(--gas);background:var(--gas-bg)}
+.elec-section{color:var(--elec);background:var(--elec-bg)}
+.temp-section{color:var(--temp);background:var(--temp-bg)}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-items:end}
+.meters-grid{grid-template-columns:repeat(auto-fill,minmax(95px,1fr))}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:7px;font-family:var(--mono);font-size:.92rem;width:100%;transition:border-color .2s;outline:none}
+.field input[type="text"],.field input[type="date"],.field select{font-family:var(--font)}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+
+.calculated{display:flex;flex-direction:column;gap:2px;padding:8px 12px;background:rgba(167,139,250,.08);border-radius:7px;border:1px dashed var(--diff)}
+.calc-label{font-size:.68rem;color:var(--diff);text-transform:uppercase;font-weight:600}
+.calc-value{font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--diff)}
+
+.btn-save{width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-save:hover{background:var(--accent-hover)}
+.btn-save:active{transform:scale(.98)}
+.btn-save:disabled{opacity:.6;cursor:not-allowed}
+
+/* Table */
+.table-wrapper{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.78rem;white-space:nowrap}
+thead th{background:var(--surface-2);padding:9px 10px;text-align:right;font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);position:sticky;top:0}
+thead th:first-child{text-align:left}
+td{padding:8px 10px;text-align:right;font-family:var(--mono);font-size:.8rem;border-bottom:1px solid var(--border)}
+td:first-child{text-align:left;font-family:var(--font);font-weight:600}
+tr:last-child td{border-bottom:none}
+.diff-cell{color:var(--diff);font-weight:600}
+.worker-cell{font-family:var(--font);color:var(--text-muted)}
+.sticky-col{position:sticky;left:0;background:var(--surface);z-index:1}
+thead .sticky-col{background:var(--surface-2);z-index:2}
+
+/* Summary */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.stat{background:var(--bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px}
+.stat-label{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;font-weight:600}
+.stat-value{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent)}
+
+/* Settings */
+.settings-bar{margin-top:14px;text-align:center}
+.btn-settings{background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:.75rem;cursor:pointer;padding:8px}
+.btn-settings:hover{color:var(--danger)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:1000;animation:slideUp .3s ease;pointer-events:none}
+.toast.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.toast.fail{background:var(--fail-bg);color:var(--danger);border:1px solid var(--danger)}
+@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:2.5rem;margin-bottom:10px}
+.loading-screen{display:flex;justify-content:center;align-items:center;height:100vh;color:var(--text-muted);font-size:1rem}
+
+/* Setup */
+.setup{max-width:600px;margin:0 auto;padding:20px}
+.setup-header{text-align:center;padding:30px 0 20px}
+.setup-icon{font-size:2.5rem;margin-bottom:8px}
+.setup-header h1{font-size:1.4rem;font-weight:700}
+.setup-header p{color:var(--text-muted);font-size:.85rem;margin-top:4px}
+.steps-indicator{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;background:var(--surface);color:var(--text-muted);border:2px solid var(--border);transition:all .3s}
+.step-dot.active{border-color:var(--accent);color:var(--accent)}
+.step-dot.current{background:var(--accent);color:#fff;border-color:var(--accent)}
+.setup-step{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--border);animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.setup-step h2{font-size:1.05rem;font-weight:700;margin-bottom:14px}
+.instruction{color:var(--text-muted);font-size:.88rem;line-height:1.6}
+.instruction p{margin-bottom:8px}
+.instruction strong{color:var(--text)}
+.instruction a{color:var(--accent)}
+.instruction ol{padding-left:20px;margin:8px 0}
+.instruction li{margin-bottom:4px}
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:12px 0}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.code-header span{font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase}
+.btn-copy{background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font)}
+.btn-copy.copied{background:var(--ok)}
+.code-content{padding:12px;font-family:var(--mono);font-size:.73rem;color:var(--text-muted);overflow-x:auto;white-space:pre;line-height:1.5;max-height:300px;overflow-y:auto}
+.headers-preview{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
+.header-chip{background:var(--surface-2);padding:3px 8px;border-radius:4px;font-size:.72rem}
+.tip{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--gas);padding:10px 14px;border-radius:8px;font-size:.82rem;margin:12px 0}
+.url-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px}
+.url-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.btn-test{width:100%;padding:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px}
+.test-result{padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;margin-bottom:10px;text-align:center}
+.test-result.ok{background:var(--ok-bg);color:var(--ok)}
+.test-result.fail{background:var(--fail-bg);color:var(--danger)}
+.btn-row{display:flex;gap:10px;margin-top:14px}
+.btn-next{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer}
+.btn-next:disabled{opacity:.4;cursor:not-allowed}
+.btn-back{padding:12px 20px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;font-family:var(--font);font-size:.85rem;cursor:pointer}
+
+.hidden{display:none}
+
+@media(max-width:500px){
+  .app{padding:10px;padding-bottom:80px}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .meters-grid{grid-template-columns:repeat(3,1fr)}
+  .date-field{grid-column:1/-1}
+  .summary-grid{grid-template-columns:1fr 1fr}
+  .field input,.field select{padding:12px 10px;font-size:1rem}
+  .header-left h1{font-size:1.1rem}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ─── Config ───
+const EL_METERS = ["480","380","183","184","182","181"];
+const GAS_PRICE = 0.57;
+const SHEET_HEADERS = "Data\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tTimestamp";
+
+const APPS_SCRIPT = `function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Duomenys");
+  if (!sheet) return jsonResp({ error: "Sheet not found" });
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return jsonResp({ entries: [] });
+  var entries = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0]) continue;
+    entries.push({
+      date: Utilities.formatDate(new Date(row[0]), "Europe/Vilnius", "yyyy-MM-dd"),
+      worker: row[1] || "", quantity: row[2] || "", gasMeter: row[3] || "",
+      el480: row[4]||"", el380: row[5]||"", el183: row[6]||"",
+      el184: row[7]||"", el182: row[8]||"", el181: row[9]||"",
+      dryerTemp: row[10]||"", outdoorTemp: row[11]||""
+    });
+  }
+  return jsonResp({ entries: entries });
+}
+
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Duomenys");
+  if (!sheet) return jsonResp({ error: "Sheet not found" });
+  var d = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    d.date, d.worker, d.quantity, d.gasMeter,
+    d.el480, d.el380, d.el183, d.el184, d.el182, d.el181,
+    d.dryerTemp, d.outdoorTemp, new Date()
+  ]);
+  return jsonResp({ success: true });
+}
+
+function jsonResp(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+// ─── State ───
+let state = {
+  scriptUrl: localStorage.getItem("kalkv_url") || "",
+  entries: [],
+  view: "form",
+  saving: false,
+  setupStep: 1,
+  lastWorker: localStorage.getItem("kalkv_worker") || ""
+};
+
+// ─── Helpers ───
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+function today() { return new Date().toISOString().split("T")[0]; }
+function fmt(n) { if (n===null||n===undefined||n==="") return "—"; return typeof n==="number"? n.toLocaleString("lt-LT"):n; }
+function diff(a,b) {
+  if(a===""||a===null||b===""||b===null) return null;
+  const x=parseFloat(a),y=parseFloat(b);
+  return (isNaN(x)||isNaN(y))?null:x-y;
+}
+
+function copyText(text, btnEl) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    btnEl.textContent = "✓ Nukopijuota!";
+    btnEl.classList.add("copied");
+    setTimeout(() => { btnEl.textContent = "📋 Kopijuoti"; btnEl.classList.remove("copied"); }, 2000);
+  } catch(e) {
+    window.prompt("Nukopijuok rankiniu būdu (Ctrl+C):", text);
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.createElement("div");
+  t.className = "toast " + (type||"ok");
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ─── API ───
+async function fetchEntries() {
+  if (!state.scriptUrl) return;
+  try {
+    const res = await fetch(state.scriptUrl);
+    const data = await res.json();
+    if (data.entries) {
+      state.entries = data.entries.map(e => ({
+        date:e.date, worker:e.worker||"", quantity:e.quantity, gasMeter:e.gasMeter,
+        el480:e.el480, el380:e.el380, el183:e.el183, el184:e.el184, el182:e.el182, el181:e.el181,
+        dryerTemp:e.dryerTemp, outdoorTemp:e.outdoorTemp
+      }));
+      render();
+    }
+  } catch(e) { showToast("Nepavyko gauti duomenų","fail"); }
+}
+
+async function saveEntry(data) {
+  state.saving = true; render();
+  try {
+    await fetch(state.scriptUrl, { method:"POST", body:JSON.stringify(data) });
+    state.entries.push({
+      date:data.date, worker:data.worker, quantity:data.quantity, gasMeter:data.gasMeter,
+      el480:data.el480, el380:data.el380, el183:data.el183, el184:data.el184, el182:data.el182, el181:data.el181,
+      dryerTemp:data.dryerTemp, outdoorTemp:data.outdoorTemp
+    });
+    state.lastWorker = data.worker;
+    localStorage.setItem("kalkv_worker", data.worker);
+    showToast("✅ Išsaugota!");
+  } catch(e) { showToast("❌ Klaida saugant","fail"); }
+  state.saving = false; render();
+}
+
+// ─── Render: Setup Wizard ───
+function renderSetup() {
+  const s = state.setupStep;
+  let html = `
+  <div class="setup">
+    <div class="setup-header">
+      <div class="setup-icon">⚙️</div>
+      <h1>Pradinė konfigūracija</h1>
+      <p>Sujungsime aplikaciją su Google Sheets per 3 žingsnius</p>
+    </div>
+    <div class="steps-indicator">
+      ${[1,2,3].map(n=>`<div class="step-dot ${s>=n?"active":""} ${s===n?"current":""}">${s>n?"✓":n}</div>`).join("")}
+    </div>`;
+
+  if (s===1) {
+    html += `
+    <div class="setup-step">
+      <h2>1. Sukurk Google Sheet</h2>
+      <div class="instruction">
+        <p>Eik į <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> ir sukurk naują spreadsheet.</p>
+        <p>Pervadink pirmąjį lapą į <strong>Duomenys</strong> (apačioje kairėje spausk ant "Sheet1" → Rename).</p>
+        <p>Į pirmą eilutę (A1) įklijuok stulpelių pavadinimus:</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span>Stulpeliai</span><button class="btn-copy" onclick="copyText(SHEET_HEADERS,this)">📋 Kopijuoti</button></div>
+        <div class="code-content headers-preview">${SHEET_HEADERS.split("\t").map(h=>`<span class="header-chip">${h}</span>`).join("")}</div>
+      </div>
+      <div class="tip">💡 Paspausk "Kopijuoti", tada Google Sheet spausk ant A1 ir Ctrl+V — viskas susidėlios į stulpelius.</div>
+      <button class="btn-next" onclick="state.setupStep=2;render()">Padaryta → Toliau</button>
+    </div>`;
+  }
+
+  if (s===2) {
+    html += `
+    <div class="setup-step">
+      <h2>2. Pridėk Apps Script</h2>
+      <div class="instruction">
+        <p>Google Sheet viršuje spausk <strong>Extensions → Apps Script</strong></p>
+        <p>Ištrink visą esamą kodą ir įklijuok šį:</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span>Apps Script kodas</span><button class="btn-copy" onclick="copyText(APPS_SCRIPT,this)">📋 Kopijuoti</button></div>
+        <pre class="code-content">${APPS_SCRIPT.replace(/</g,"&lt;")}</pre>
+      </div>
+      <div class="instruction" style="margin-top:16px">
+        <p>Tada deploy'ink:</p>
+        <ol>
+          <li>Spausk <strong>Deploy → New deployment</strong></li>
+          <li>Type: <strong>Web app</strong></li>
+          <li>Execute as: <strong>Me</strong></li>
+          <li>Who has access: <strong>Anyone</strong></li>
+          <li>Spausk <strong>Deploy</strong></li>
+          <li>Authorize kai paprašys</li>
+          <li><strong>Nusikopijuok URL</strong></li>
+        </ol>
+      </div>
+      <div class="tip">⚠️ URL atrodo taip: https://script.google.com/macros/s/AKfy.../exec</div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="state.setupStep=1;render()">← Atgal</button>
+        <button class="btn-next" onclick="state.setupStep=3;render()">Turiu URL → Toliau</button>
+      </div>
+    </div>`;
+  }
+
+  if (s===3) {
+    html += `
+    <div class="setup-step">
+      <h2>3. Įvesk Script URL</h2>
+      <div class="instruction"><p>Įklijuok Web App URL:</p></div>
+      <input type="url" class="url-input" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="">
+      <button class="btn-test" id="btnTest" onclick="testUrl()">🔗 Testuoti ryšį</button>
+      <div id="testResult"></div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="state.setupStep=2;render()">← Atgal</button>
+        <button class="btn-next" id="btnStart" onclick="finishSetup()">🚀 Pradėti naudoti</button>
+      </div>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+async function testUrl() {
+  const url = $("#scriptUrlInput").value.trim();
+  if (!url) return;
+  $("#btnTest").textContent = "⏳ Tikrinama...";
+  $("#btnTest").disabled = true;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.entries !== undefined) {
+      $("#testResult").innerHTML = '<div class="test-result ok">✅ Ryšys veikia!</div>';
+      $("#btnStart").disabled = false;
+    } else {
+      $("#testResult").innerHTML = '<div class="test-result fail">❌ Netinkamas atsakymas</div>';
+    }
+  } catch(e) {
+    $("#testResult").innerHTML = '<div class="test-result fail">❌ Nepavyko prisijungti</div>';
+  }
+  $("#btnTest").textContent = "🔗 Testuoti ryšį";
+  $("#btnTest").disabled = false;
+}
+
+function finishSetup() {
+  const url = $("#scriptUrlInput").value.trim();
+  if (!url) return;
+  state.scriptUrl = url;
+  localStorage.setItem("kalkv_url", url);
+  render();
+  fetchEntries();
+}
+
+// ─── Render: Main App ───
+function renderApp() {
+  const lastEntry = state.entries.length > 0 ? state.entries[state.entries.length-1] : null;
+
+  let html = `
+  <div class="app">
+    <div class="header">
+      <div class="header-left">
+        <h1>KALK V Gamyba</h1>
+        <div class="subtitle">UAB Mortar Akmenė</div>
+      </div>
+      <div class="status-badge"><div class="status-dot"></div> Google Sheets</div>
+    </div>
+    <div class="nav">
+      <button class="${state.view==="form"?"active":""}" onclick="state.view='form';render()">✏️ Įvedimas</button>
+      <button class="${state.view==="table"?"active":""}" onclick="state.view='table';render()">📋 Duomenys (${state.entries.length})</button>
+    </div>`;
+
+  if (state.view === "form") {
+    html += `
+    <div class="card">
+      <h2>➕ Naujas įrašas</h2>
+      <div class="form-grid">
+        <div class="field date-field">
+          <label>Data</label>
+          <input type="date" id="f_date" value="${today()}">
+        </div>
+        <div class="field">
+          <label>Darbuotojas</label>
+          <input type="text" id="f_worker" value="${state.lastWorker}" placeholder="Vardas">
+        </div>
+        <div class="field">
+          <label>Kiekis, t</label>
+          <input type="number" inputmode="decimal" step="any" id="f_quantity" placeholder="0">
+        </div>
+      </div>
+
+      <div class="section-label gas-section"><span class="section-icon">🔥</span> Dujos</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Dujų skaitiklis</label>
+          <input type="number" inputmode="decimal" step="any" id="f_gas" placeholder="0" oninput="updateGasDiff()">
+        </div>
+        <div class="calculated" id="gasDiffBox" style="display:none">
+          <span class="calc-label">Skirtumas</span>
+          <span class="calc-value" id="gasDiffVal">—</span>
+        </div>
+      </div>
+
+      <div class="section-label elec-section"><span class="section-icon">⚡</span> Elektros skaitikliai</div>
+      <div class="form-grid meters-grid">
+        ${EL_METERS.map(m=>`<div class="field"><label>${m}</label><input type="number" inputmode="decimal" step="any" id="f_el${m}" placeholder="0"></div>`).join("")}
+      </div>
+
+      <div class="section-label temp-section"><span class="section-icon">🌡️</span> Temperatūra</div>
+      <div class="form-grid">
+        <div class="field"><label>Džiovyklės °C</label><input type="number" inputmode="decimal" step="any" id="f_dryer" placeholder="0"></div>
+        <div class="field"><label>Lauko °C</label><input type="number" inputmode="decimal" step="any" id="f_outdoor" placeholder="0"></div>
+      </div>
+
+      <button class="btn-save" id="btnSave" onclick="handleSave()" ${state.saving?"disabled":""}>${state.saving?"⏳ Siunčiama...":"💾 Išsaugoti"}</button>
+    </div>`;
+  }
+
+  if (state.view === "table") {
+    if (state.entries.length === 0) {
+      html += `<div class="empty-state"><div class="icon">📭</div><p>Dar nėra įrašų</p></div>`;
+    } else {
+      html += `<div class="table-wrapper"><div class="table-scroll"><table><thead><tr>
+        <th class="sticky-col">Data</th><th>Darb.</th><th>Kiekis</th><th>Dujų sk.</th><th>Dujų Δ</th>
+        ${EL_METERS.map(m=>`<th>El.${m}</th>`).join("")}
+        <th>Dž.°C</th><th>Lauko°C</th></tr></thead><tbody>`;
+
+      state.entries.forEach((e,i) => {
+        const prev = i>0?state.entries[i-1]:null;
+        const gd = prev?diff(e.gasMeter,prev.gasMeter):null;
+        html += `<tr>
+          <td class="sticky-col">${e.date}</td>
+          <td class="worker-cell">${e.worker||"—"}</td>
+          <td>${fmt(e.quantity)}</td>
+          <td>${fmt(e.gasMeter)}</td>
+          <td class="diff-cell">${fmt(gd)}</td>
+          ${EL_METERS.map(m=>`<td>${fmt(e["el"+m])}</td>`).join("")}
+          <td>${fmt(e.dryerTemp)}</td>
+          <td>${fmt(e.outdoorTemp)}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+
+      // Summary
+      if (state.entries.length >= 2) {
+        let totalQty = state.entries.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
+        let totalGas = 0;
+        for(let i=1;i<state.entries.length;i++){const d=diff(state.entries[i].gasMeter,state.entries[i-1].gasMeter);if(d!==null)totalGas+=d;}
+        const gasCost = totalGas * GAS_PRICE;
+        html += `
+        <div class="card" style="margin-top:14px">
+          <h2>📊 Suvestinė</h2>
+          <div class="summary-grid">
+            <div class="stat"><span class="stat-label">Pagaminta</span><span class="stat-value">${totalQty.toFixed(1)} t</span></div>
+            <div class="stat"><span class="stat-label">Dujų suv.</span><span class="stat-value">${fmt(totalGas)}</span></div>
+            <div class="stat"><span class="stat-label">Dujų kaina</span><span class="stat-value">€${gasCost.toFixed(2)}</span></div>
+            <div class="stat"><span class="stat-label">€ / t</span><span class="stat-value">${totalQty>0?"€"+(gasCost/totalQty).toFixed(2):"—"}</span></div>
+          </div>
+        </div>`;
+      }
+    }
+    html += `
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn-test" onclick="fetchEntries()">🔄 Atnaujinti duomenis</button>
+    </div>`;
+  }
+
+  html += `
+    <div class="settings-bar">
+      <button class="btn-settings" onclick="resetSetup()">⚙️ Atjungti Google Sheets</button>
+    </div>
+  </div>`;
+
+  return html;
+}
+
+function updateGasDiff() {
+  const gasInput = $("#f_gas");
+  if (!gasInput) return;
+  const lastEntry = state.entries.length>0?state.entries[state.entries.length-1]:null;
+  if (!lastEntry) return;
+  const d = diff(gasInput.value, lastEntry.gasMeter);
+  const box = $("#gasDiffBox");
+  if (d !== null) {
+    box.style.display = "flex";
+    $("#gasDiffVal").textContent = fmt(d);
+  } else {
+    box.style.display = "none";
+  }
+}
+
+async function handleSave() {
+  const data = {
+    date: $("#f_date").value,
+    worker: $("#f_worker").value,
+    quantity: $("#f_quantity").value,
+    gasMeter: $("#f_gas").value,
+    el480: $("#f_el480").value, el380: $("#f_el380").value,
+    el183: $("#f_el183").value, el184: $("#f_el184").value,
+    el182: $("#f_el182").value, el181: $("#f_el181").value,
+    dryerTemp: $("#f_dryer").value,
+    outdoorTemp: $("#f_outdoor").value
+  };
+  if (!data.date) return;
+  await saveEntry(data);
+  // Clear form but keep worker and date
+  render();
+}
+
+function resetSetup() {
+  if (confirm("Atjungti Google Sheets? Duomenys NEBUS ištrinti.")) {
+    state.scriptUrl = "";
+    state.entries = [];
+    localStorage.removeItem("kalkv_url");
+    render();
+  }
+}
+
+// ─── Main render ───
+function render() {
+  const app = $("#app");
+  if (!state.scriptUrl) {
+    app.innerHTML = renderSetup();
+  } else {
+    app.innerHTML = renderApp();
+  }
+}
+
+// ─── Init ───
+render();
+if (state.scriptUrl) fetchEntries();
+</script>
+</body>
+</html>
