@@ -223,7 +223,7 @@ function cp(text,btn){
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
 async function getWeather(){
-  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current_weather=true&timezone=Europe%2FVilnius");const d=await r.json();if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}
+  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}
 }
 
 function gfr(k){
