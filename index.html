@@ -252,8 +252,9 @@ function showToast(msg, type) {
 async function fetchEntries() {
   if (!state.scriptUrl) return;
   try {
-    const res = await fetch(state.scriptUrl);
-    const data = await res.json();
+    const res = await fetch(state.scriptUrl, { redirect:"follow" });
+    const text = await res.text();
+    const data = JSON.parse(text);
     if (data.entries) {
       state.entries = data.entries.map(e => ({
         date:e.date, worker:e.worker||"", quantity:e.quantity, gasMeter:e.gasMeter,
@@ -268,7 +269,12 @@ async function fetchEntries() {
 async function saveEntry(data) {
   state.saving = true; render();
   try {
-    await fetch(state.scriptUrl, { method:"POST", body:JSON.stringify(data) });
+    await fetch(state.scriptUrl, {
+      method:"POST",
+      redirect:"follow",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(data)
+    });
     state.entries.push({
       date:data.date, worker:data.worker, quantity:data.quantity, gasMeter:data.gasMeter,
       el480:data.el480, el380:data.el380, el183:data.el183, el184:data.el184, el182:data.el182, el181:data.el181,
@@ -353,6 +359,7 @@ function renderSetup() {
       <input type="url" class="url-input" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="">
       <button class="btn-test" id="btnTest" onclick="testUrl()">🔗 Testuoti ryšį</button>
       <div id="testResult"></div>
+      <button class="btn-test" id="btnSkip" style="display:none;border-color:var(--gas);color:var(--gas)" onclick="finishSetup()">⏭️ Praleisti testą ir pradėti</button>
       <div class="btn-row">
         <button class="btn-back" onclick="state.setupStep=2;render()">← Atgal</button>
         <button class="btn-next" id="btnStart" onclick="finishSetup()">🚀 Pradėti naudoti</button>
@@ -370,8 +377,9 @@ async function testUrl() {
   $("#btnTest").textContent = "⏳ Tikrinama...";
   $("#btnTest").disabled = true;
   try {
-    const res = await fetch(url);
-    const data = await res.json();
+    const res = await fetch(url, { redirect:"follow" });
+    const text = await res.text();
+    const data = JSON.parse(text);
     if (data.entries !== undefined) {
       $("#testResult").innerHTML = '<div class="test-result ok">✅ Ryšys veikia!</div>';
       $("#btnStart").disabled = false;
@@ -379,7 +387,8 @@ async function testUrl() {
       $("#testResult").innerHTML = '<div class="test-result fail">❌ Netinkamas atsakymas</div>';
     }
   } catch(e) {
-    $("#testResult").innerHTML = '<div class="test-result fail">❌ Nepavyko prisijungti</div>';
+    $("#testResult").innerHTML = '<div class="test-result fail">❌ Nepavyko prisijungti iš šios aplinkos.<br><small style="font-weight:400">Jei URL naršyklėje grąžina {"entries":[]}, tai jis veikia teisingai. Spausk "Praleisti testą" žemiau.</small></div>';
+    $("#btnSkip").style.display = "block";
   }
   $("#btnTest").textContent = "🔗 Testuoti ryšį";
   $("#btnTest").disabled = false;
