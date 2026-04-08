@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>KALK V Gamyba</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0f1117;--surface:#1a1d27;--surface-2:#232735;--border:#2d3244;--text:#e4e6ef;--text-muted:#8b8fa7;--accent:#3b82f6;--accent-hover:#2563eb;--gas:#f59e0b;--gas-bg:rgba(245,158,11,.08);--elec:#06b6d4;--elec-bg:rgba(6,182,212,.08);--temp:#10b981;--temp-bg:rgba(16,185,129,.08);--diff:#a78bfa;--danger:#ef4444;--ok:#10b981;--ok-bg:rgba(16,185,129,.12);--fail-bg:rgba(239,68,68,.12);--radius:10px;--font:'DM Sans',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace}
@@ -18,7 +21,7 @@ html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit
 .dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .nav{display:flex;gap:3px;background:var(--surface);border-radius:var(--radius);padding:4px;margin-bottom:16px}
-.nav button{flex:1;padding:9px 4px;border:none;background:none;color:var(--text-muted);font-family:var(--font);font-size:.76rem;font-weight:600;border-radius:7px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav button{flex:1;padding:9px 4px;border:none;background:none;color:var(--text-muted);font-family:var(--font);font-size:.72rem;font-weight:600;border-radius:7px;cursor:pointer;transition:all .2s;white-space:nowrap}
 .nav button.active{background:var(--accent);color:#fff}
 .card{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border);margin-bottom:16px}
 .card h2{font-size:1rem;font-weight:700;margin-bottom:14px}
@@ -41,7 +44,6 @@ html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit
 .bsv:hover{background:var(--accent-hover)}.bsv:active{transform:scale(.98)}.bsv:disabled{opacity:.6;cursor:not-allowed}
 .bsv.em{background:var(--gas)}
 .bcan{padding:14px;background:none;border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius);font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;margin-top:8px;width:100%}
-/* Table — max 7 rows visible */
 .tw{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
 .ts{overflow-x:auto;overflow-y:auto;max-height:340px;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:.76rem;white-space:nowrap}
@@ -51,8 +53,7 @@ td{padding:7px 8px;text-align:right;font-family:var(--mono);font-size:.78rem;bor
 td:first-child{text-align:left;font-family:var(--font);font-weight:600}
 tr:last-child td{border-bottom:none}
 tr:hover{background:rgba(59,130,246,.04)}
-.dc{color:var(--diff);font-weight:600}
-.wc{font-family:var(--font);color:var(--text-muted)}
+.dc{color:var(--diff);font-weight:600}.wc{font-family:var(--font);color:var(--text-muted)}
 .sc{position:sticky;left:0;background:var(--surface);z-index:1}
 thead .sc{background:var(--surface-2);z-index:3}
 .ac{text-align:center!important;white-space:nowrap}
@@ -64,11 +65,19 @@ thead .sc{background:var(--surface-2);z-index:3}
 .stt .sv{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)}
 .fb{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
 .fc{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:var(--font);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.fc.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.fc:hover{border-color:var(--accent)}
+.fc.active{background:var(--accent);color:#fff;border-color:var(--accent)}.fc:hover{border-color:var(--accent)}
 .cr{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 .cr input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font);font-size:.8rem;outline:none}
 .cr span{color:var(--text-muted);font-size:.8rem}
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:16px}
+.chart-card h3{font-size:.82rem;font-weight:700;margin-bottom:10px;color:var(--text-muted)}
+.chart-card canvas{width:100%!important;max-height:220px}
+.btn-pdf{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;background:var(--danger);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-pdf:hover{opacity:.9}.btn-pdf:active{transform:scale(.97)}
+.report-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+/* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:1000;animation:su .3s ease;pointer-events:none}
 .toast.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
 .toast.fail{background:var(--fail-bg);color:var(--danger);border:1px solid var(--danger)}
@@ -94,19 +103,17 @@ thead .sc{background:var(--surface-2);z-index:3}
 .hc{background:var(--surface-2);padding:3px 8px;border-radius:4px;font-size:.72rem}
 .tip{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--gas);padding:10px 14px;border-radius:8px;font-size:.82rem;margin:12px 0}
 .warn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--danger);padding:10px 14px;border-radius:8px;font-size:.82rem;margin:12px 0}
-.ui{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px}
-.ui:focus{border-color:var(--accent)}
+.ui{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px}.ui:focus{border-color:var(--accent)}
 .bt{width:100%;padding:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px}
 .tr{padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;margin-bottom:10px;text-align:center}
 .tr.ok{background:var(--ok-bg);color:var(--ok)}.tr.fail{background:var(--fail-bg);color:var(--danger)}
 .br{display:flex;gap:10px;margin-top:14px}
-.bn{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer}
-.bn:disabled{opacity:.4;cursor:not-allowed}
+.bn{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer}.bn:disabled{opacity:.4;cursor:not-allowed}
 .bb{padding:12px 20px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;font-family:var(--font);font-size:.85rem;cursor:pointer}
 .bss{width:100%;padding:12px;background:var(--ok);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:8px}
-.bdc{background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:.75rem;cursor:pointer;padding:8px;margin-top:20px}
-.bdc:hover{color:var(--danger)}
-@media(max-width:500px){.app{padding:10px;padding-bottom:80px}.fg{grid-template-columns:1fr 1fr}.mg{grid-template-columns:repeat(3,1fr)}.df{grid-column:1/-1}.sgr{grid-template-columns:1fr 1fr}.f input{padding:12px 10px;font-size:1rem}.header-left h1{font-size:1.1rem}.nav button{font-size:.7rem;padding:8px 2px}.fc{padding:5px 9px;font-size:.7rem}.ts{max-height:300px}}
+.bdc{background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:.75rem;cursor:pointer;padding:8px;margin-top:20px}.bdc:hover{color:var(--danger)}
+@media(max-width:600px){.chart-grid{grid-template-columns:1fr}}
+@media(max-width:500px){.app{padding:10px;padding-bottom:80px}.fg{grid-template-columns:1fr 1fr}.mg{grid-template-columns:repeat(3,1fr)}.df{grid-column:1/-1}.sgr{grid-template-columns:1fr 1fr}.f input{padding:12px 10px;font-size:1rem}.header-left h1{font-size:1.1rem}.nav button{font-size:.68rem;padding:8px 2px}.fc{padding:5px 9px;font-size:.7rem}}
 </style>
 </head>
 <body>
@@ -114,9 +121,14 @@ thead .sc{background:var(--surface-2);z-index:3}
 <script>
 const EL=["480","380","183","184","182","181"],VL=56.35,VN=22.30;
 const SH="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tDuju_kaina\tEl_kaina\tTimestamp";
+const AS=`function fixNum(v) {
+  if (v instanceof Date) return "";
+  if (typeof v === "number") return v;
+  var n = Number(v);
+  return isNaN(n) ? (v || "") : n;
+}
 
-// Apps Script — hour formatted as HH:mm
-const AS=`function doGet(e) {
+function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Duomenys");
   if (!sheet) return jr({ error: "Sheet not found" });
@@ -126,7 +138,6 @@ const AS=`function doGet(e) {
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
     if (!r[0]) continue;
-    // Format hour: handle Date objects from Sheets
     var hourVal = "";
     if (r[1] instanceof Date) {
       hourVal = Utilities.formatDate(r[1], "Europe/Vilnius", "HH:mm");
@@ -136,15 +147,13 @@ const AS=`function doGet(e) {
     entries.push({
       row: i + 1,
       date: Utilities.formatDate(new Date(r[0]), "Europe/Vilnius", "yyyy-MM-dd"),
-      hour: hourVal,
-      worker: r[2] || "",
-      quantity: r[3] || "",
-      gasMeter: r[4] || "",
-      el480: r[5]||"", el380: r[6]||"",
-      el183: r[7]||"", el184: r[8]||"",
-      el182: r[9]||"", el181: r[10]||"",
-      dryerTemp: r[11]||"", outdoorTemp: r[12]||"",
-      gasPrice: r[13]||"", elPrice: r[14]||""
+      hour: hourVal, worker: r[2] || "",
+      quantity: fixNum(r[3]), gasMeter: fixNum(r[4]),
+      el480: fixNum(r[5]), el380: fixNum(r[6]),
+      el183: fixNum(r[7]), el184: fixNum(r[8]),
+      el182: fixNum(r[9]), el181: fixNum(r[10]),
+      dryerTemp: fixNum(r[11]), outdoorTemp: fixNum(r[12]),
+      gasPrice: fixNum(r[13]), elPrice: fixNum(r[14])
     });
   }
   return jr({ entries: entries });
@@ -155,12 +164,10 @@ function doPost(e) {
   var sheet = ss.getSheetByName("Duomenys");
   if (!sheet) return jr({ error: "Sheet not found" });
   var d = JSON.parse(e.postData.contents);
-
   if (d.action === "delete") {
     if (d.row > 1) sheet.deleteRow(d.row);
     return jr({ success: true });
   }
-
   if (d.action === "edit") {
     var vals = [[d.date, d.hour, d.worker,
       d.quantity, d.gasMeter,
@@ -169,8 +176,6 @@ function doPost(e) {
     sheet.getRange(d.row, 1, 1, 15).setValues(vals);
     return jr({ success: true });
   }
-
-  // Add new row
   sheet.appendRow([
     d.date, d.hour, d.worker, d.quantity, d.gasMeter,
     d.el480, d.el380, d.el183, d.el184, d.el182, d.el181,
@@ -185,16 +190,8 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={
-  url:localStorage.getItem("kv_url")||"",
-  entries:[],view:"form",saving:false,step:1,
-  lastW:localStorage.getItem("kv_w")||"",
-  lastD:localStorage.getItem("kv_d")||"",
-  oTemp:null,
-  cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20},
-  fl:"month",ff:"",ft:"",
-  editEntry:null
-};
+let S={url:localStorage.getItem("kv_url")||"",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20},fl:"month",ff:"",ft:"",editEntry:null};
+let charts={};
 
 function $(s){return document.querySelector(s)}
 function td(){return new Date().toISOString().split("T")[0]}
@@ -203,248 +200,199 @@ function fm(n){if(n===null||n===undefined||n==="")return"\u2014";return typeof n
 function df(a,b){if(a===""||a==null||b===""||b==null)return null;const x=parseFloat(a),y=parseFloat(b);return(isNaN(x)||isNaN(y))?null:x-y}
 function pd(n){return n<10?"0"+n:""+n}
 function fd(d){return d.getFullYear()+"-"+pd(d.getMonth()+1)+"-"+pd(d.getDate())}
-
-// Parse hour from various formats (ISO date string, HH:mm, etc)
-function parseHour(v){
-  if(!v)return"";
-  const s=String(v);
-  // ISO format like "1899-12-30T16:30:00.000Z"
-  if(s.includes("T")){
-    try{const d=new Date(s);if(!isNaN(d)){return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}}catch(e){}
-  }
-  // Already HH:mm
-  if(/^\d{1,2}:\d{2}/.test(s))return s.slice(0,5);
-  return s;
-}
-
-function cp(text,btn){
-  try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}
-}
+function parseHour(v){if(!v)return"";const s=String(v);if(s.includes("T")){try{const d=new Date(s);if(!isNaN(d))return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}catch(e){}}if(/^\d{1,2}:\d{2}/.test(s))return s.slice(0,5);return s}
+function cp(text,btn){try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}}
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
-async function getWeather(){
-  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}
-}
+async function getWeather(){try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}}
 
-function gfr(k){
-  const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;
-  switch(k){
-    case"today":return{a:td(),b:td()};
-    case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}}
-    case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};
-    case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};
-    case"year":return{a:y+"-01-01",b:y+"-12-31"};
-    case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};
-    case"all":return{a:"",b:""};
-    case"custom":return{a:S.ff,b:S.ft};
-    default:return{a:"",b:""}
-  }
-}
+function gfr(k){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;switch(k){case"today":return{a:td(),b:td()};case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}};case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};case"year":return{a:y+"-01-01",b:y+"-12-31"};case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};case"all":return{a:"",b:""};case"custom":return{a:S.ff,b:S.ft};default:return{a:"",b:""}}}
 function filt(arr){const r=gfr(S.fl);if(!r.a&&!r.b)return arr;return arr.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true})}
 
-async function load(){
-  if(!S.url)return;
-  try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);
-    if(d.entries){
-      // Normalize hour values
-      d.entries.forEach(e=>{e.hour=parseHour(e.hour)});
-      S.entries=d.entries;
-      if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}
-      R()
-    }}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}
+// Compute summary data for filtered entries
+function calcSummary(fi){
+  const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
+  const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
+  let tG=0,tE=0;
+  fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
+    if(prev){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
+      EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d!==null)tE+=d})}});
+  let gP=S.cfg.gp,eP=S.cfg.ep;
+  for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
+  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap};
 }
 
-async function post(payload){
-  try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});return true}catch(e){return false}
-}
-
-async function saveNew(d){
-  S.saving=true;R();
-  d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;
-  if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else{toast("\u274C Klaida","fail")}
-  S.saving=false;R();
-}
-
-async function saveEdit(d){
-  S.saving=true;R();
-  d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;
-  if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else{toast("\u274C Klaida","fail")}
-  S.saving=false;R();
-}
-
-async function deleteEntry(row){
-  if(!confirm("Ar tikrai i\u0161trinti?"))return;
-  if(await post({action:"delete",row:row})){toast("\u2705 I\u0161trinta!");await load()}else{toast("\u274C Klaida","fail")}
-}
+async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
+async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
+async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
+async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
+async function deleteEntry(row){if(!confirm("I\u0161trinti?"))return;if(await post({action:"delete",row})){toast("\u2705 I\u0161trinta!");await load()}else toast("\u274C Klaida","fail")}
 
 // ── Setup ──
-function rSetup(){
-  const s=S.step;
-  let h='<div class="setup"><div class="setup-header"><div class="setup-icon">\u2699\uFE0F</div><h1>Konfig\u016Bracija</h1><p>Sujungsime su Google Sheets</p></div>';
-  h+='<div class="si2">'+[1,2,3].map(n=>'<div class="sd '+(s>=n?"a":"")+" "+(s===n?"c":"")+'">'+(s>n?"\u2713":n)+"</div>").join("")+"</div>";
-
-  if(s===1){h+='<div class="ss2"><h2>1. Sukurk Google Sheet</h2><div class="ins"><p><a href="https://sheets.google.com" target="_blank">sheets.google.com</a> \u2192 naujas spreadsheet \u2192 pervadink lap\u0105 \u012F <strong>Duomenys</strong> \u2192 \u012F A1 \u012Fklijuok:</p></div>';
-  h+='<div class="cb"><div class="ch"><span>Stulpeliai</span><button class="bcp" onclick="cp(SH,this)">\uD83D\uDCCB Kopijuoti</button></div><div class="cc hp">'+SH.split("\t").map(x=>'<span class="hc">'+x+"</span>").join("")+"</div></div>";
-  h+='<div class="tip">\uD83D\uDCA1 Kopijuoti \u2192 Google Sheet A1 \u2192 Ctrl+V</div><button class="bn" onclick="S.step=2;R()">Toliau \u2192</button></div>'}
-
-  if(s===2){h+='<div class="ss2"><h2>2. Apps Script</h2><div class="ins"><p><strong>Extensions \u2192 Apps Script</strong> \u2192 i\u0161trink sen\u0105 kod\u0105 \u2192 \u012Fklijuok:</p></div>';
-  h+='<div class="cb"><div class="ch"><span>Kodas</span><button class="bcp" onclick="cp(AS,this)">\uD83D\uDCCB Kopijuoti</button></div><pre class="cc">'+AS.replace(/</g,"&lt;")+"</pre></div>";
-  h+='<div class="ins" style="margin-top:16px"><ol><li><strong>Deploy \u2192 New deployment</strong></li><li>Type: <strong>Web app</strong></li><li>Execute as: <strong>Me</strong>, Access: <strong>Anyone</strong></li><li><strong>Deploy</strong> \u2192 Authorize \u2192 Kopijuok URL</li></ol></div>';
-  h+='<div class="warn">\u26A0\uFE0F Jei atnaujini esam\u0105 script\u0105:<br><strong>Deploy \u2192 Manage deployments \u2192 Edit (piestukas) \u2192 Version: New version \u2192 Deploy</strong></div>';
-  h+='<div class="br"><button class="bb" onclick="S.step=1;R()">\u2190</button><button class="bn" onclick="S.step=3;R()">Turiu URL \u2192</button></div></div>'}
-
-  if(s===3){h+='<div class="ss2"><h2>3. Script URL</h2><input type="url" class="ui" id="sUrl" placeholder="https://script.google.com/macros/s/.../exec">';
-  h+='<button class="bt" onclick="tUrl()">\uD83D\uDD17 Testuoti</button><div id="tR"></div>';
-  h+='<button class="bt" id="bSk" style="display:none;border-color:var(--gas);color:var(--gas)" onclick="finish()">\u23ED Praleisti</button>';
-  h+='<div class="br"><button class="bb" onclick="S.step=2;R()">\u2190</button><button class="bn" onclick="finish()">\uD83D\uDE80 Prad\u0117ti</button></div></div>'}
-  return h+"</div>";
-}
-
-async function tUrl(){
-  const u=$("#sUrl").value.trim();if(!u)return;$("#tR").innerHTML="";
-  try{const r=await fetch(u,{redirect:"follow"});const d=JSON.parse(await r.text());
-    $("#tR").innerHTML=d.entries!==undefined?'<div class="tr ok">\u2705 Veikia!</div>':'<div class="tr fail">\u274C Blogas atsakymas</div>'}
-  catch(e){$("#tR").innerHTML='<div class="tr fail">\u274C Nepavyko. Jei URL veikia nar\u0161ykl\u0117je, spausk Praleisti.</div>';$("#bSk").style.display="block"}
-}
-
+function rSetup(){const s=S.step;let h='<div class="setup"><div class="setup-header"><div class="setup-icon">\u2699\uFE0F</div><h1>Konfig\u016Bracija</h1><p>Sujungsime su Google Sheets</p></div><div class="si2">'+[1,2,3].map(n=>'<div class="sd '+(s>=n?"a":"")+" "+(s===n?"c":"")+'">'+(s>n?"\u2713":n)+"</div>").join("")+"</div>";
+if(s===1){h+='<div class="ss2"><h2>1. Sukurk Google Sheet</h2><div class="ins"><p><a href="https://sheets.google.com" target="_blank">sheets.google.com</a> \u2192 naujas spreadsheet \u2192 lapas <strong>Duomenys</strong> \u2192 A1:</p></div><div class="cb"><div class="ch"><span>Stulpeliai</span><button class="bcp" onclick="cp(SH,this)">\uD83D\uDCCB Kopijuoti</button></div><div class="cc hp">'+SH.split("\t").map(x=>'<span class="hc">'+x+"</span>").join("")+'</div></div><button class="bn" onclick="S.step=2;R()">Toliau \u2192</button></div>'}
+if(s===2){h+='<div class="ss2"><h2>2. Apps Script</h2><div class="ins"><p><strong>Extensions \u2192 Apps Script</strong> \u2192 \u012Fklijuok kod\u0105:</p></div><div class="cb"><div class="ch"><span>Kodas</span><button class="bcp" onclick="cp(AS,this)">\uD83D\uDCCB Kopijuoti</button></div><pre class="cc">'+AS.replace(/</g,"&lt;")+'</pre></div><div class="ins"><ol><li><strong>Deploy \u2192 New deployment</strong></li><li>Web app, Execute as: Me, Access: Anyone</li><li><strong>Deploy</strong> \u2192 Kopijuok URL</li></ol></div><div class="warn">\u26A0\uFE0F Atnaujinant: <strong>Deploy \u2192 Manage deployments \u2192 \u270F\uFE0F \u2192 Version: New \u2192 Deploy</strong></div><div class="br"><button class="bb" onclick="S.step=1;R()">\u2190</button><button class="bn" onclick="S.step=3;R()">Turiu URL \u2192</button></div></div>'}
+if(s===3){h+='<div class="ss2"><h2>3. Script URL</h2><input type="url" class="ui" id="sUrl" placeholder="https://script.google.com/macros/s/.../exec"><button class="bt" onclick="tUrl()">\uD83D\uDD17 Testuoti</button><div id="tR"></div><button class="bt" id="bSk" style="display:none;border-color:var(--gas);color:var(--gas)" onclick="finish()">\u23ED Praleisti</button><div class="br"><button class="bb" onclick="S.step=2;R()">\u2190</button><button class="bn" onclick="finish()">\uD83D\uDE80 Prad\u0117ti</button></div></div>'}
+return h+"</div>"}
+async function tUrl(){const u=$("#sUrl").value.trim();if(!u)return;try{const r=await fetch(u,{redirect:"follow"});const d=JSON.parse(await r.text());$("#tR").innerHTML=d.entries!==undefined?'<div class="tr ok">\u2705 Veikia!</div>':'<div class="tr fail">\u274C Blogas</div>'}catch(e){$("#tR").innerHTML='<div class="tr fail">\u274C Nepavyko. Jei URL veikia nar\u0161ykl\u0117je, spausk Praleisti.</div>';$("#bSk").style.display="block"}}
 function finish(){const el=$("#sUrl");const u=el?el.value.trim():S.url;if(!u)return;S.url=u;localStorage.setItem("kv_url",u);R();load()}
 
 // ── Form ──
-function rForm(){
-  const ed=S.editEntry;
-  const w=ed?ed.worker:S.lastW, dr=ed?ed.dryerTemp:S.lastD;
-  const oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:"");
-  const dt=ed?ed.date:td(), hr=ed?ed.hour:nt();
-  const q=ed?ed.quantity:"", g=ed?ed.gasMeter:"";
+function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:S.lastD,oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:""),dt=ed?ed.date:td(),hr=ed?ed.hour:nt(),q=ed?ed.quantity:"",g=ed?ed.gasMeter:"";
+let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div><div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div></div>';
+h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
+h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">'+EL.map(m=>'<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'"></div>').join("")+"</div>";
+h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
+h+='<button class="bsv'+(ed?" em":"")+'" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE Atnaujinti":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
+if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</button>';
+return h+"</div>"}
+function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
+async function hSave(){const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
-  let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas \u012Fra\u0161as")+"</h2>";
-  h+='<div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div>';
-  h+='<div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div>';
-  h+='<div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div>';
-  h+='<div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'" placeholder="0"></div></div>';
-
-  h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg">';
-  h+='<div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" placeholder="0" oninput="ugd()"></div>';
-  h+='<div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
-
-  h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">';
-  EL.forEach(m=>{h+='<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'" placeholder="0"></div>'});
-  h+="</div>";
-
-  h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg">';
-  h+='<div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div>';
-  h+='<div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
-
-  h+='<button class="bsv'+(ed?" em":"")+'" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE Atnaujinti":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
-  if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</button>';
-  return h+"</div>";
+// ── Filter bar HTML ──
+function rFilterBar(){
+  const ps=[{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j.m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j.metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
+  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
+  if(S.fl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.ff+'" onchange="S.ff=this.value;R()"><span>Iki</span><input type="date" value="'+S.ft+'" onchange="S.ft=this.value;R()"></div>';
+  return h;
 }
 
-function ugd(){
-  const gi=$("#fg");if(!gi)return;
-  const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;
-  const d=df(gi.value,last.gasMeter),b=$("#gdb");
-  if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else{b.style.display="none"}
-}
-
-async function hSave(){
-  const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,
-    quantity:$("#fq").value,gasMeter:$("#fg").value,
-    el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,
-    el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,
-    dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};
-  if(!d.date)return;
-  if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}
-  else{await saveNew(d)}
+// ── Summary HTML ──
+function rSummary(fi,sm){
+  if(fi.length<1)return"";
+  return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2><div class="sgr">'
+  +'<div class="stt"><span class="sl">Pagaminta</span><span class="sv">'+sm.tQ.toFixed(1)+' t</span></div>'
+  +'<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(sm.tG))+'</span></div>'
+  +'<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+sm.gC.toFixed(2)+'</span></div>'
+  +'<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(sm.tE))+' kWh</span></div>'
+  +'<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+sm.eC.toFixed(2)+'</span></div>'
+  +'<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+sm.tC.toFixed(2)+'</span></div>'
+  +'<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
+  +'<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div></div></div>';
 }
 
 // ── Table ──
 function rTable(){
-  const fi=filt(S.entries);
-  const ps=[{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j. m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j. metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
-  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
-  if(S.fl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.ff+'" onchange="S.ff=this.value;R()"><span>Iki</span><input type="date" value="'+S.ft+'" onchange="S.ft=this.value;R()"></div>';
-
-  // Summary FIRST (always visible, before scrollable table)
-  const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
-
-  if(fi.length>=1){
-    const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
-    let tG=0,tE=0;
-    fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
-      if(prev){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
-        EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d!==null)tE+=d})}});
-    let gP=S.cfg.gp,eP=S.cfg.ep;
-    for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
-    const gC=tG*gP,eC=tE*eP,tC=gC+eC;
-    h+='<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+gP.toFixed(2)+' / el. \u20AC'+eP.toFixed(3)+')</span></h2><div class="sgr">';
-    h+='<div class="stt"><span class="sl">Pagaminta</span><span class="sv">'+tQ.toFixed(1)+' t</span></div>';
-    h+='<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(tG))+'</span></div>';
-    h+='<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+gC.toFixed(2)+'</span></div>';
-    h+='<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(tE))+' kWh</span></div>';
-    h+='<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+eC.toFixed(2)+'</span></div>';
-    h+='<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+tC.toFixed(2)+'</span></div>';
-    h+='<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(tQ>0?"\u20AC"+(tC/tQ).toFixed(2):"\u2014")+'</span></div>';
-    h+='<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div></div></div>';
-  }
-
+  const fi=filt(S.entries),sm=calcSummary(fi);
+  let h=rFilterBar()+rSummary(fi,sm);
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
+  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data</th><th>Val.</th><th>Darb.</th><th>Kiekis</th><th>Duj\u0173</th><th>D.\u0394</th>'+EL.map(m=>"<th>"+m+"</th>").join("")+'<th>D\u017E.\u00B0C</th><th>L.\u00B0C</th><th class="ac"></th></tr></thead><tbody>';
+  fi.forEach(e=>{const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,gd=prev?df(e.gasMeter,prev.gasMeter):null;
+    h+='<tr><td class="sc">'+e.date+"</td><td>"+(e.hour||"\u2014")+'</td><td class="wc">'+(e.worker||"\u2014")+"</td><td>"+fm(e.quantity)+"</td><td>"+fm(e.gasMeter)+'</td><td class="dc">'+fm(gd)+"</td>"+EL.map(m=>"<td>"+fm(e["el"+m])+"</td>").join("")+"<td>"+fm(e.dryerTemp)+"</td><td>"+fm(e.outdoorTemp)+'</td><td class="ac"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td></tr>'});
+  h+='</tbody></table></div></div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
+  return h;
+}
+function startEdit(i){S.editEntry=S.entries[i];S.view="form";R();window.scrollTo({top:0,behavior:"smooth"})}
 
-  // Table with scroll (max ~7 rows visible)
-  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data</th><th>Val.</th><th>Darb.</th><th>Kiekis</th><th>Duj\u0173</th><th>D.\u0394</th>';
-  EL.forEach(m=>{h+="<th>"+m+"</th>"});
-  h+="<th>D\u017E.\u00B0C</th><th>L.\u00B0C</th><th class=\"ac\"></th></tr></thead><tbody>";
-
-  fi.forEach(e=>{
-    const i=imap.get(e),prev=i>0?S.entries[i-1]:null,gd=prev?df(e.gasMeter,prev.gasMeter):null;
-    h+='<tr><td class="sc">'+e.date+"</td><td>"+(e.hour||"\u2014")+'</td><td class="wc">'+(e.worker||"\u2014")+"</td>";
-    h+="<td>"+fm(e.quantity)+"</td><td>"+fm(e.gasMeter)+'</td><td class="dc">'+fm(gd)+"</td>";
-    EL.forEach(m=>{h+="<td>"+fm(e["el"+m])+"</td>"});
-    h+="<td>"+fm(e.dryerTemp)+"</td><td>"+fm(e.outdoorTemp)+"</td>";
-    h+='<td class="ac"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td></tr>';
-  });
-  h+="</tbody></table></div></div>";
-
-  h+='<div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
+// ── Charts + PDF ──
+function rCharts(){
+  const fi=filt(S.entries),sm=calcSummary(fi);
+  let h=rFilterBar()+rSummary(fi,sm);
+  if(fi.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDCC8</div><p>Reikia bent 2 \u012Fra\u0161\u0173 grafikams</p></div>';
+  h+='<div class="report-actions"><button class="btn-pdf" onclick="genPDF()">\uD83D\uDCC4 Eksportuoti PDF</button></div>';
+  h+='<div class="chart-grid"><div class="chart-card"><h3>\uD83C\uDFED Gamyba (t)</h3><canvas id="chProd"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDD25 Duj\u0173 suvartojimas</h3><canvas id="chGas"></canvas></div>';
+  h+='<div class="chart-card"><h3>\u20AC Kaštai</h3><canvas id="chCost"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83C\uDF21\uFE0F Temperatūra</h3><canvas id="chTemp"></canvas></div></div>';
   return h;
 }
 
-function startEdit(i){S.editEntry=S.entries[i];S.view="form";R();window.scrollTo({top:0,behavior:"smooth"})}
+function drawCharts(){
+  if(S.view!=="charts")return;
+  const fi=filt(S.entries);if(fi.length<2)return;
+  const sm=calcSummary(fi);
+  const labels=fi.map(e=>e.date.slice(5));
+  const qty=fi.map(e=>parseFloat(e.quantity)||0);
+  const gasDiffs=[],elDiffs=[],costG=[],costE=[],tDry=[],tOut=[];
+  fi.forEach((e,idx)=>{
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
+    const gd=prev?df(e.gasMeter,prev.gasMeter):0;
+    let ed=0;if(prev)EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d)ed+=d});
+    gasDiffs.push(gd||0);elDiffs.push(ed);
+    costG.push((gd||0)*sm.gP);costE.push(ed*sm.eP);
+    tDry.push(parseFloat(e.dryerTemp)||null);tOut.push(parseFloat(e.outdoorTemp)||null);
+  });
+
+  Object.values(charts).forEach(c=>c.destroy());charts={};
+  const dark={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}};
+
+  charts.prod=new Chart($("#chProd"),{type:"bar",data:{labels,datasets:[{label:"Kiekis, t",data:qty,backgroundColor:"rgba(59,130,246,.6)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:dark,y:dark}}});
+  charts.gas=new Chart($("#chGas"),{type:"bar",data:{labels,datasets:[{label:"Dujos",data:gasDiffs,backgroundColor:"rgba(245,158,11,.6)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:dark,y:dark}}});
+  charts.cost=new Chart($("#chCost"),{type:"line",data:{labels,datasets:[{label:"Dujos \u20AC",data:costG,borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,.1)",fill:true,tension:.3},{label:"Elektra \u20AC",data:costE,borderColor:"#06b6d4",backgroundColor:"rgba(6,182,212,.1)",fill:true,tension:.3}]},options:{responsive:true,plugins:{legend:{labels:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}}},scales:{x:dark,y:dark}}});
+  charts.temp=new Chart($("#chTemp"),{type:"line",data:{labels,datasets:[{label:"D\u017Eiovykl\u0117",data:tDry,borderColor:"#ef4444",tension:.3,spanGaps:true},{label:"Lauko",data:tOut,borderColor:"#10b981",tension:.3,spanGaps:true}]},options:{responsive:true,plugins:{legend:{labels:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}}},scales:{x:dark,y:dark}}});
+}
+
+// ── PDF ──
+function genPDF(){
+  const fi=filt(S.entries);if(!fi.length){toast("N\u0117ra duomen\u0173","fail");return}
+  const sm=calcSummary(fi);
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"landscape"});
+  const pw=doc.internal.pageSize.getWidth();
+
+  // Header
+  doc.setFontSize(18);doc.setFont("helvetica","bold");
+  doc.text("KALK V Gamybos Ataskaita",14,18);
+  doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(100);
+  doc.text("UAB Mortar Akmene",14,25);
+  const range=gfr(S.fl);
+  doc.text("Laikotarpis: "+(range.a||"...")+"\u2014"+(range.b||"..."),14,31);
+  doc.text("Sugeneruota: "+new Date().toLocaleString("lt-LT"),14,37);
+
+  // Summary
+  doc.setFontSize(12);doc.setFont("helvetica","bold");doc.setTextColor(0);
+  doc.text("Suvestine",14,48);
+  doc.autoTable({startY:52,theme:"grid",headStyles:{fillColor:[59,130,246]},
+    head:[["Rodiklis","Reiksme"]],
+    body:[
+      ["Pagaminta",sm.tQ.toFixed(1)+" t"],
+      ["Duju suvartojimas",Math.round(sm.tG).toString()],
+      ["Duju kaina","\u20AC"+sm.gC.toFixed(2)+" (\u20AC"+sm.gP.toFixed(2)+"/vnt)"],
+      ["Elektros suvartojimas",Math.round(sm.tE)+" kWh"],
+      ["Elektros kaina","\u20AC"+sm.eC.toFixed(2)+" (\u20AC"+sm.eP.toFixed(3)+"/kWh)"],
+      ["Viso kaina","\u20AC"+sm.tC.toFixed(2)],
+      ["Kaina / t",sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014"],
+      ["Irasu skaicius",fi.length.toString()]
+    ],margin:{left:14},tableWidth:120});
+
+  // Data table
+  const tableY=doc.lastAutoTable.finalY+12;
+  doc.setFontSize(12);doc.setFont("helvetica","bold");
+  doc.text("Duomenys",14,tableY);
+
+  const tHead=[["Data","Val.","Darb.","Kiekis","Duju sk.","D.\u0394",...EL.map(m=>"El."+m),"Dz.\u00B0C","L.\u00B0C"]];
+  const tBody=fi.map(e=>{
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
+    const gd=prev?df(e.gasMeter,prev.gasMeter):null;
+    return[e.date,e.hour||"",e.worker||"",e.quantity||"",e.gasMeter||"",gd!==null?gd:"",
+      ...EL.map(m=>e["el"+m]||""),e.dryerTemp||"",e.outdoorTemp||""];
+  });
+
+  doc.autoTable({startY:tableY+4,theme:"striped",headStyles:{fillColor:[59,130,246],fontSize:7},bodyStyles:{fontSize:7},head:tHead,body:tBody,margin:{left:14}});
+
+  doc.save("KALK_V_ataskaita_"+td()+".pdf");
+  toast("\u2705 PDF sugeneruotas!");
+}
 
 // ── Settings ──
-function rCfg(){
-  return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2>'
-  +'<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div>'
-  +'<div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+S.cfg.gp+'"></div></div>'
-  +'<div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div>'
-  +'<div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+S.cfg.ep+'"></div></div>'
-  +'<div class="slbl sst"><span class="si">\uD83D\uDD17</span> Google Sheets</div>'
-  +'<div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div>'
-  +'<button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button>'
-  +'<div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti</button></div></div>';
-}
-
-function sCfg(){
-  S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0};
-  localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));
-  const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u);load()}
-  toast("\u2705 I\u0161saugota!");
-}
-
+function rCfg(){return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2><div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+S.cfg.gp+'"></div></div><div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+S.cfg.ep+'"></div></div><div class="slbl sst"><span class="si">\uD83D\uDD17</span> Google Sheets</div><div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div><button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button><div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti</button></div></div>'}
+function sCfg(){S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0};localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u);load()}toast("\u2705 I\u0161saugota!")}
 function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.removeItem("kv_url");R()}}
 
 // ── Render ──
 function R(){
-  const a=$("#app");
-  if(!S.url){a.innerHTML=rSetup();return}
+  const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
   let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117</div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
+  h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
   h+='<button class="'+(S.view==="settings"?"active":"")+'" onclick="S.view=\'settings\';R()">\u2699\uFE0F Nust.</button></div>';
   if(S.view==="form")h+=rForm();
   if(S.view==="table")h+=rTable();
+  if(S.view==="charts")h+=rCharts();
   if(S.view==="settings")h+=rCfg();
   a.innerHTML=h+"</div>";
+  if(S.view==="charts")setTimeout(drawCharts,50);
 }
 
 R();if(S.url)load();getWeather().then(()=>{if(S.view==="form")R()});
