@@ -4,436 +4,427 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>KALK V Gamyba</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0f1117;--surface:#1a1d27;--surface-2:#232735;
-  --border:#2d3244;--text:#e4e6ef;--text-muted:#8b8fa7;
-  --accent:#3b82f6;--accent-hover:#2563eb;
-  --gas:#f59e0b;--gas-bg:rgba(245,158,11,.08);
-  --elec:#06b6d4;--elec-bg:rgba(6,182,212,.08);
-  --temp:#10b981;--temp-bg:rgba(16,185,129,.08);
-  --diff:#a78bfa;--danger:#ef4444;
-  --ok:#10b981;--ok-bg:rgba(16,185,129,.12);
-  --fail-bg:rgba(239,68,68,.12);
-  --radius:10px;
-  --font:'DM Sans',-apple-system,sans-serif;
-  --mono:'JetBrains Mono',monospace;
-}
-html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh}
-.app{max-width:900px;margin:0 auto;padding:16px;padding-bottom:100px}
+:root{--bg:#0f1117;--surface:#1a1d27;--surface-2:#232735;--border:#2d3244;--text:#e4e6ef;--text-muted:#8b8fa7;--accent:#3b82f6;--accent-hover:#2563eb;--gas:#f59e0b;--gas-bg:rgba(245,158,11,.08);--elec:#06b6d4;--elec-bg:rgba(6,182,212,.08);--temp:#10b981;--temp-bg:rgba(16,185,129,.08);--diff:#a78bfa;--danger:#ef4444;--ok:#10b981;--ok-bg:rgba(16,185,129,.12);--fail-bg:rgba(239,68,68,.12);--radius:10px;--font:'DM Sans',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100dvh}
+.app{max-width:920px;margin:0 auto;padding:16px;padding-bottom:100px}
 .header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
-.header-left h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,var(--accent),var(--elec));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.header-left .subtitle{color:var(--text-muted);font-size:.78rem;margin-top:2px}
-.status-badge{display:flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok);padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:600}
-.status-dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite}
+.header-left h1{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--elec));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-left .sub{color:var(--text-muted);font-size:.78rem;margin-top:2px}
+.badge{display:flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok);padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:600}
+.dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .nav{display:flex;gap:3px;background:var(--surface);border-radius:var(--radius);padding:4px;margin-bottom:16px}
 .nav button{flex:1;padding:9px 4px;border:none;background:none;color:var(--text-muted);font-family:var(--font);font-size:.76rem;font-weight:600;border-radius:7px;cursor:pointer;transition:all .2s;white-space:nowrap}
 .nav button.active{background:var(--accent);color:#fff}
 .card{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border);margin-bottom:16px}
 .card h2{font-size:1rem;font-weight:700;margin-bottom:14px}
-.section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;padding:7px 12px;border-radius:7px;display:flex;align-items:center;gap:6px}
-.section-icon{font-size:.95rem}
-.gas-section{color:var(--gas);background:var(--gas-bg)}
-.elec-section{color:var(--elec);background:var(--elec-bg)}
-.temp-section{color:var(--temp);background:var(--temp-bg)}
-.settings-section{color:var(--diff);background:rgba(167,139,250,.08)}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-items:end}
-.meters-grid{grid-template-columns:repeat(auto-fill,minmax(95px,1fr))}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
-.field input,.field select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:7px;font-family:var(--mono);font-size:.92rem;width:100%;transition:border-color .2s;outline:none}
-.field input[type="text"],.field input[type="date"],.field input[type="time"],.field select{font-family:var(--font)}
-.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
-.field input.auto-filled{border-color:var(--temp);background:rgba(16,185,129,.05)}
-.auto-tag{font-size:.6rem;color:var(--temp);font-weight:600;text-transform:uppercase;margin-left:3px}
-.calculated{display:flex;flex-direction:column;gap:2px;padding:8px 12px;background:rgba(167,139,250,.08);border-radius:7px;border:1px dashed var(--diff)}
-.calc-label{font-size:.68rem;color:var(--diff);text-transform:uppercase;font-weight:600}
-.calc-value{font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--diff)}
-.btn-save{width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-save:hover{background:var(--accent-hover)}
-.btn-save:active{transform:scale(.98)}
-.btn-save:disabled{opacity:.6;cursor:not-allowed}
-.table-wrapper{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
-.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;font-size:.78rem;white-space:nowrap}
-thead th{background:var(--surface-2);padding:9px 10px;text-align:right;font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);position:sticky;top:0}
+.slbl{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;padding:7px 12px;border-radius:7px;display:flex;align-items:center;gap:6px}
+.si{font-size:.95rem}
+.sg{color:var(--gas);background:var(--gas-bg)}.se{color:var(--elec);background:var(--elec-bg)}.st{color:var(--temp);background:var(--temp-bg)}.ss{color:var(--diff);background:rgba(167,139,250,.08)}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-items:end}
+.mg{grid-template-columns:repeat(auto-fill,minmax(95px,1fr))}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.f input,.f select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:7px;font-family:var(--mono);font-size:.92rem;width:100%;transition:border-color .2s;outline:none}
+.f input[type=text],.f input[type=date],.f input[type=time]{font-family:var(--font)}
+.f input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.f input.af{border-color:var(--temp);background:rgba(16,185,129,.05)}
+.at{font-size:.6rem;color:var(--temp);font-weight:600;margin-left:3px}
+.calc{display:flex;flex-direction:column;gap:2px;padding:8px 12px;background:rgba(167,139,250,.08);border-radius:7px;border:1px dashed var(--diff)}
+.calc .cl{font-size:.68rem;color:var(--diff);text-transform:uppercase;font-weight:600}
+.calc .cv{font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--diff)}
+.bsv{width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s}
+.bsv:hover{background:var(--accent-hover)}.bsv:active{transform:scale(.98)}.bsv:disabled{opacity:.6;cursor:not-allowed}
+.bsv.edit-mode{background:var(--gas)}
+.bcan{padding:14px;background:none;border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius);font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;margin-top:8px;width:100%}
+.tw{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.ts{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.76rem;white-space:nowrap}
+thead th{background:var(--surface-2);padding:8px 8px;text-align:right;font-size:.66rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border);position:sticky;top:0}
 thead th:first-child{text-align:left}
-td{padding:8px 10px;text-align:right;font-family:var(--mono);font-size:.8rem;border-bottom:1px solid var(--border)}
+td{padding:7px 8px;text-align:right;font-family:var(--mono);font-size:.78rem;border-bottom:1px solid var(--border)}
 td:first-child{text-align:left;font-family:var(--font);font-weight:600}
 tr:last-child td{border-bottom:none}
-.diff-cell{color:var(--diff);font-weight:600}
-.worker-cell{font-family:var(--font);color:var(--text-muted)}
-.sticky-col{position:sticky;left:0;background:var(--surface);z-index:1}
-thead .sticky-col{background:var(--surface-2);z-index:2}
-.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.stat{background:var(--bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px}
-.stat-label{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;font-weight:600}
-.stat-value{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent)}
-.filter-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.filter-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.filter-chip:hover{border-color:var(--accent)}
-.custom-range{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-.custom-range input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font);font-size:.8rem;outline:none}
-.custom-range input:focus{border-color:var(--accent)}
-.custom-range span{color:var(--text-muted);font-size:.8rem}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:1000;animation:slideUp .3s ease;pointer-events:none}
+tr:hover{background:rgba(59,130,246,.04)}
+.dc{color:var(--diff);font-weight:600}
+.wc{font-family:var(--font);color:var(--text-muted)}
+.sc{position:sticky;left:0;background:var(--surface);z-index:1}
+thead .sc{background:var(--surface-2);z-index:2}
+.ac{text-align:center!important;white-space:nowrap}
+.bi{background:none;border:none;cursor:pointer;font-size:.8rem;padding:3px;opacity:.5;transition:opacity .15s}
+.bi:hover{opacity:1}
+.sgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.stt{background:var(--bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px}
+.stt .sl{font-size:.66rem;color:var(--text-muted);text-transform:uppercase;font-weight:600}
+.stt .sv{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)}
+.fb{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.fc{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:var(--font);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.fc.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fc:hover{border-color:var(--accent)}
+.cr{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.cr input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font);font-size:.8rem;outline:none}
+.cr span{color:var(--text-muted);font-size:.8rem}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:1000;animation:su .3s ease;pointer-events:none}
 .toast.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
 .toast.fail{background:var(--fail-bg);color:var(--danger);border:1px solid var(--danger)}
-@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
-.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
-.empty-state .icon{font-size:2.5rem;margin-bottom:10px}
+@keyframes su{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.es{text-align:center;padding:40px 20px;color:var(--text-muted)}.es .icon{font-size:2.5rem;margin-bottom:10px}
 .setup{max-width:600px;margin:0 auto;padding:20px}
-.setup-header{text-align:center;padding:30px 0 20px}
-.setup-icon{font-size:2.5rem;margin-bottom:8px}
-.setup-header h1{font-size:1.4rem;font-weight:700}
-.setup-header p{color:var(--text-muted);font-size:.85rem;margin-top:4px}
-.steps-indicator{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
-.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;background:var(--surface);color:var(--text-muted);border:2px solid var(--border);transition:all .3s}
-.step-dot.active{border-color:var(--accent);color:var(--accent)}
-.step-dot.current{background:var(--accent);color:#fff;border-color:var(--accent)}
-.setup-step{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--border);animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.setup-step h2{font-size:1.05rem;font-weight:700;margin-bottom:14px}
-.instruction{color:var(--text-muted);font-size:.88rem;line-height:1.6}
-.instruction p{margin-bottom:8px}
-.instruction strong{color:var(--text)}
-.instruction a{color:var(--accent)}
-.instruction ol{padding-left:20px;margin:8px 0}
-.instruction li{margin-bottom:4px}
-.code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:12px 0}
-.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
-.code-header span{font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase}
-.btn-copy{background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font)}
-.btn-copy.copied{background:var(--ok)}
-.code-content{padding:12px;font-family:var(--mono);font-size:.73rem;color:var(--text-muted);overflow-x:auto;white-space:pre;line-height:1.5;max-height:300px;overflow-y:auto}
-.headers-preview{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
-.header-chip{background:var(--surface-2);padding:3px 8px;border-radius:4px;font-size:.72rem}
+.setup-header{text-align:center;padding:30px 0 20px}.setup-icon{font-size:2.5rem;margin-bottom:8px}.setup-header h1{font-size:1.4rem;font-weight:700}.setup-header p{color:var(--text-muted);font-size:.85rem;margin-top:4px}
+.si2{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.sd{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;background:var(--surface);color:var(--text-muted);border:2px solid var(--border);transition:all .3s}
+.sd.a{border-color:var(--accent);color:var(--accent)}.sd.c{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ss2{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--border);animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ss2 h2{font-size:1.05rem;font-weight:700;margin-bottom:14px}
+.ins{color:var(--text-muted);font-size:.88rem;line-height:1.6}.ins p{margin-bottom:8px}.ins strong{color:var(--text)}.ins a{color:var(--accent)}.ins ol{padding-left:20px;margin:8px 0}.ins li{margin-bottom:4px}
+.cb{background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:12px 0}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.ch span{font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase}
+.bcp{background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font)}
+.bcp.ok{background:var(--ok)}
+.cc{padding:12px;font-family:var(--mono);font-size:.73rem;color:var(--text-muted);overflow-x:auto;white-space:pre;line-height:1.5;max-height:300px;overflow-y:auto}
+.hp{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
+.hc{background:var(--surface-2);padding:3px 8px;border-radius:4px;font-size:.72rem}
 .tip{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--gas);padding:10px 14px;border-radius:8px;font-size:.82rem;margin:12px 0}
-.url-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px}
-.url-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
-.btn-test{width:100%;padding:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px}
-.test-result{padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;margin-bottom:10px;text-align:center}
-.test-result.ok{background:var(--ok-bg);color:var(--ok)}
-.test-result.fail{background:var(--fail-bg);color:var(--danger)}
-.btn-row{display:flex;gap:10px;margin-top:14px}
-.btn-next{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer}
-.btn-next:disabled{opacity:.4;cursor:not-allowed}
-.btn-back{padding:12px 20px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;font-family:var(--font);font-size:.85rem;cursor:pointer}
-.btn-settings-save{width:100%;padding:12px;background:var(--ok);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:8px}
-.btn-disconnect{background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:.75rem;cursor:pointer;padding:8px;margin-top:20px}
-.btn-disconnect:hover{color:var(--danger)}
-@media(max-width:500px){
-  .app{padding:10px;padding-bottom:80px}
-  .form-grid{grid-template-columns:1fr 1fr}
-  .meters-grid{grid-template-columns:repeat(3,1fr)}
-  .date-field{grid-column:1/-1}
-  .summary-grid{grid-template-columns:1fr 1fr}
-  .field input,.field select{padding:12px 10px;font-size:1rem}
-  .header-left h1{font-size:1.1rem}
-  .nav button{font-size:.7rem;padding:8px 2px}
-  .filter-chip{padding:5px 9px;font-size:.7rem}
-}
+.ui{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-family:var(--mono);font-size:.85rem;outline:none;margin-bottom:10px}
+.ui:focus{border-color:var(--accent)}
+.bt{width:100%;padding:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px}
+.tr{padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;margin-bottom:10px;text-align:center}
+.tr.ok{background:var(--ok-bg);color:var(--ok)}.tr.fail{background:var(--fail-bg);color:var(--danger)}
+.br{display:flex;gap:10px;margin-top:14px}
+.bn{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer}
+.bn:disabled{opacity:.4;cursor:not-allowed}
+.bb{padding:12px 20px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;font-family:var(--font);font-size:.85rem;cursor:pointer}
+.bss{width:100%;padding:12px;background:var(--ok);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;margin-top:8px}
+.bdc{background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:.75rem;cursor:pointer;padding:8px;margin-top:20px}
+.bdc:hover{color:var(--danger)}
+@media(max-width:500px){.app{padding:10px;padding-bottom:80px}.fg{grid-template-columns:1fr 1fr}.mg{grid-template-columns:repeat(3,1fr)}.df{grid-column:1/-1}.sgr{grid-template-columns:1fr 1fr}.f input{padding:12px 10px;font-size:1rem}.header-left h1{font-size:1.1rem}.nav button{font-size:.7rem;padding:8px 2px}.fc{padding:5px 9px;font-size:.7rem}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-const EL_METERS=["480","380","183","184","182","181"];
-const VENTA_LAT=56.35,VENTA_LNG=22.30;
-const SHEET_HEADERS="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tTimestamp";
-const APPS_SCRIPT=`function doGet(e) {
+const EL=["480","380","183","184","182","181"],VL=56.35,VN=22.30;
+const SH="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tDuju_kaina\tEl_kaina\tTimestamp";
+
+const AS=`function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Duomenys");
-  if (!sheet) return jsonResp({ error: "Sheet not found" });
+  if (!sheet) return jr({ error: "Sheet not found" });
   var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return jsonResp({ entries: [] });
+  if (data.length <= 1) return jr({ entries: [] });
   var entries = [];
   for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (!row[0]) continue;
+    var r = data[i];
+    if (!r[0]) continue;
     entries.push({
-      date: Utilities.formatDate(new Date(row[0]), "Europe/Vilnius", "yyyy-MM-dd"),
-      hour: row[1] || "", worker: row[2] || "",
-      quantity: row[3] || "", gasMeter: row[4] || "",
-      el480: row[5]||"", el380: row[6]||"",
-      el183: row[7]||"", el184: row[8]||"",
-      el182: row[9]||"", el181: row[10]||"",
-      dryerTemp: row[11]||"", outdoorTemp: row[12]||""
+      row: i + 1,
+      date: Utilities.formatDate(new Date(r[0]), "Europe/Vilnius", "yyyy-MM-dd"),
+      hour: r[1]||"", worker: r[2]||"", quantity: r[3]||"",
+      gasMeter: r[4]||"",
+      el480: r[5]||"", el380: r[6]||"", el183: r[7]||"",
+      el184: r[8]||"", el182: r[9]||"", el181: r[10]||"",
+      dryerTemp: r[11]||"", outdoorTemp: r[12]||"",
+      gasPrice: r[13]||"", elPrice: r[14]||""
     });
   }
-  return jsonResp({ entries: entries });
+  return jr({ entries: entries });
 }
 
 function doPost(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Duomenys");
-  if (!sheet) return jsonResp({ error: "Sheet not found" });
+  if (!sheet) return jr({ error: "Sheet not found" });
   var d = JSON.parse(e.postData.contents);
+
+  if (d.action === "delete") {
+    if (d.row > 1) sheet.deleteRow(d.row);
+    return jr({ success: true });
+  }
+
+  if (d.action === "edit") {
+    var vals = [[d.date, d.hour, d.worker,
+      d.quantity, d.gasMeter,
+      d.el480, d.el380, d.el183, d.el184, d.el182, d.el181,
+      d.dryerTemp, d.outdoorTemp, d.gasPrice, d.elPrice]];
+    sheet.getRange(d.row, 1, 1, 15).setValues(vals);
+    return jr({ success: true });
+  }
+
   sheet.appendRow([
     d.date, d.hour, d.worker, d.quantity, d.gasMeter,
     d.el480, d.el380, d.el183, d.el184, d.el182, d.el181,
-    d.dryerTemp, d.outdoorTemp, new Date()
+    d.dryerTemp, d.outdoorTemp, d.gasPrice, d.elPrice,
+    new Date()
   ]);
-  return jsonResp({ success: true });
+  return jr({ success: true });
 }
 
-function jsonResp(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
+function jr(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let state={
-  scriptUrl:localStorage.getItem("kalkv_url")||"",
-  entries:[],view:"form",saving:false,setupStep:1,
-  lastWorker:localStorage.getItem("kalkv_worker")||"",
-  lastDryerTemp:localStorage.getItem("kalkv_dryer")||"",
-  outdoorTemp:null,
-  settings:JSON.parse(localStorage.getItem("kalkv_settings")||"null")||{gasPrice:0.57,elPrice:0.20},
-  filter:"month",filterFrom:"",filterTo:""
+let S={
+  url:localStorage.getItem("kv_url")||"",
+  entries:[],view:"form",saving:false,step:1,
+  lastW:localStorage.getItem("kv_w")||"",
+  lastD:localStorage.getItem("kv_d")||"",
+  oTemp:null,
+  cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20},
+  fl:"month",ff:"",ft:"",
+  editEntry:null
 };
 
 function $(s){return document.querySelector(s)}
-function today(){return new Date().toISOString().split("T")[0]}
-function nowTime(){return new Date().toTimeString().slice(0,5)}
-function fmt(n){if(n===null||n===undefined||n==="")return"\u2014";return typeof n==="number"?n.toLocaleString("lt-LT"):n}
-function diff(a,b){if(a===""||a===null||b===""||b===null)return null;const x=parseFloat(a),y=parseFloat(b);return(isNaN(x)||isNaN(y))?null:x-y}
-function pad(n){return n<10?"0"+n:""+n}
-function fmtDate(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function td(){return new Date().toISOString().split("T")[0]}
+function nt(){return new Date().toTimeString().slice(0,5)}
+function fm(n){if(n===null||n===undefined||n==="")return"\u2014";return typeof n==="number"?n.toLocaleString("lt-LT"):n}
+function df(a,b){if(a===""||a==null||b===""||b==null)return null;const x=parseFloat(a),y=parseFloat(b);return(isNaN(x)||isNaN(y))?null:x-y}
+function pd(n){return n<10?"0"+n:""+n}
+function fd(d){return d.getFullYear()+"-"+pd(d.getMonth()+1)+"-"+pd(d.getDate())}
 
-function copyText(text,btnEl){
-  try{const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;left:-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta);
-  btnEl.textContent="\u2713 Nukopijuota!";btnEl.classList.add("copied");setTimeout(()=>{btnEl.textContent="\uD83D\uDCCB Kopijuoti";btnEl.classList.remove("copied")},2000)}catch(e){window.prompt("Nukopijuok (Ctrl+C):",text)}
+function cp(text,btn){
+  try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}
 }
-function showToast(msg,type){const t=document.createElement("div");t.className="toast "+(type||"ok");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
-async function fetchWeather(){
-  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VENTA_LAT+"&longitude="+VENTA_LNG+"&current_weather=true&timezone=Europe%2FVilnius");
-  const d=await r.json();if(d.current_weather)state.outdoorTemp=d.current_weather.temperature}catch(e){}
+async function getWeather(){
+  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current_weather=true&timezone=Europe%2FVilnius");const d=await r.json();if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}
 }
 
-function getFilterRange(key){
-  const now=new Date(),y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),dow=now.getDay()||7;
-  switch(key){
-    case"today":return{from:today(),to:today()};
-    case"week":{const a=new Date(y,m,d-dow+1);const b=new Date(y,m,d-dow+7);return{from:fmtDate(a),to:fmtDate(b)}}
-    case"month":return{from:y+"-"+pad(m+1)+"-01",to:fmtDate(new Date(y,m+1,0))};
-    case"lastmonth":return{from:(m===0?y-1:y)+"-"+pad(m===0?12:m)+"-01",to:fmtDate(new Date(y,m,0))};
-    case"year":return{from:y+"-01-01",to:y+"-12-31"};
-    case"lastyear":return{from:(y-1)+"-01-01",to:(y-1)+"-12-31"};
-    case"all":return{from:"",to:""};
-    case"custom":return{from:state.filterFrom,to:state.filterTo};
-    default:return{from:"",to:""}
+function gfr(k){
+  const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;
+  switch(k){
+    case"today":return{a:td(),b:td()};
+    case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}}
+    case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};
+    case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};
+    case"year":return{a:y+"-01-01",b:y+"-12-31"};
+    case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};
+    case"all":return{a:"",b:""};
+    case"custom":return{a:S.ff,b:S.ft};
+    default:return{a:"",b:""}
   }
 }
-function filterEntries(entries){
-  const r=getFilterRange(state.filter);if(!r.from&&!r.to)return entries;
-  return entries.filter(e=>{if(!e.date)return false;if(r.from&&e.date<r.from)return false;if(r.to&&e.date>r.to)return false;return true});
+function filt(arr){const r=gfr(S.fl);if(!r.a&&!r.b)return arr;return arr.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true})}
+
+// ── API ──
+async function load(){
+  if(!S.url)return;
+  try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);
+    if(d.entries){S.entries=d.entries;
+    if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}
+    R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}
 }
 
-async function fetchEntries(){
-  if(!state.scriptUrl)return;
-  try{const r=await fetch(state.scriptUrl,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);
-    if(d.entries){state.entries=d.entries.map(e=>({date:e.date,hour:e.hour||"",worker:e.worker||"",quantity:e.quantity,gasMeter:e.gasMeter,el480:e.el480,el380:e.el380,el183:e.el183,el184:e.el184,el182:e.el182,el181:e.el181,dryerTemp:e.dryerTemp,outdoorTemp:e.outdoorTemp}));
-    if(state.entries.length>0){const l=state.entries[state.entries.length-1];state.lastWorker=l.worker||state.lastWorker;state.lastDryerTemp=l.dryerTemp||state.lastDryerTemp}
-    render()}}catch(e){showToast("Nepavyko gauti duomen\u0173","fail")}
+async function post(payload){
+  try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});return true}catch(e){return false}
 }
 
-async function saveEntry(data){
-  state.saving=true;render();
-  try{await fetch(state.scriptUrl,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)});
-    state.entries.push(data);state.lastWorker=data.worker;state.lastDryerTemp=data.dryerTemp;
-    localStorage.setItem("kalkv_worker",data.worker);localStorage.setItem("kalkv_dryer",data.dryerTemp);
-    showToast("\u2705 I\u0161saugota!")}catch(e){showToast("\u274C Klaida saugant","fail")}
-  state.saving=false;render();
+async function saveNew(d){
+  S.saving=true;R();
+  d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;
+  if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else{toast("\u274C Klaida","fail")}
+  S.saving=false;R();
+}
+
+async function saveEdit(d){
+  S.saving=true;R();
+  d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;
+  if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else{toast("\u274C Klaida","fail")}
+  S.saving=false;R();
+}
+
+async function deleteEntry(row){
+  if(!confirm("Ar tikrai i\u0161trinti \u0161\u012F \u012Fra\u0161\u0105?"))return;
+  if(await post({action:"delete",row:row})){toast("\u2705 I\u0161trinta!");await load()}else{toast("\u274C Klaida","fail")}
 }
 
 // ── Setup ──
-function renderSetup(){
-  const s=state.setupStep;
-  let h='<div class="setup"><div class="setup-header"><div class="setup-icon">\u2699\uFE0F</div><h1>Pradin\u0117 konfig\u016Bracija</h1><p>Sujungsime su Google Sheets per 3 \u017Eingsnius</p></div>';
-  h+='<div class="steps-indicator">'+[1,2,3].map(n=>'<div class="step-dot '+(s>=n?"active":"")+" "+(s===n?"current":"")+'">'+(s>n?"\u2713":n)+"</div>").join("")+"</div>";
+function rSetup(){
+  const s=S.step;
+  let h='<div class="setup"><div class="setup-header"><div class="setup-icon">\u2699\uFE0F</div><h1>Konfig\u016Bracija</h1><p>Sujungsime su Google Sheets per 3 \u017Eingsnius</p></div>';
+  h+='<div class="si2">'+[1,2,3].map(n=>'<div class="sd '+(s>=n?"a":"")+" "+(s===n?"c":"")+'">'+(s>n?"\u2713":n)+"</div>").join("")+"</div>";
 
-  if(s===1){h+='<div class="setup-step"><h2>1. Sukurk Google Sheet</h2><div class="instruction"><p>Eik \u012F <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> ir sukurk nauj\u0105 spreadsheet.</p><p>Pervadink pirm\u0105j\u012F lap\u0105 \u012F <strong>Duomenys</strong>.</p><p>\u012E pirm\u0105 eilut\u0119 (A1) \u012Fklijuok stulpeli\u0173 pavadinimus:</p></div>';
-  h+='<div class="code-block"><div class="code-header"><span>Stulpeliai</span><button class="btn-copy" onclick="copyText(SHEET_HEADERS,this)">\uD83D\uDCCB Kopijuoti</button></div><div class="code-content headers-preview">'+SHEET_HEADERS.split("\t").map(x=>'<span class="header-chip">'+x+"</span>").join("")+"</div></div>";
-  h+='<div class="tip">\uD83D\uDCA1 Spausk "Kopijuoti", Google Sheet spausk A1 ir Ctrl+V.</div>';
-  h+='<button class="btn-next" onclick="state.setupStep=2;render()">Padaryta \u2192 Toliau</button></div>'}
+  if(s===1){h+='<div class="ss2"><h2>1. Sukurk Google Sheet</h2><div class="ins"><p>Eik \u012F <a href="https://sheets.google.com" target="_blank">sheets.google.com</a>, sukurk nauj\u0105 spreadsheet.</p><p>Pervadink lap\u0105 \u012F <strong>Duomenys</strong>. \u012E A1 \u012Fklijuok:</p></div>';
+  h+='<div class="cb"><div class="ch"><span>Stulpeliai</span><button class="bcp" onclick="cp(SH,this)">\uD83D\uDCCB Kopijuoti</button></div><div class="cc hp">'+SH.split("\t").map(x=>'<span class="hc">'+x+"</span>").join("")+"</div></div>";
+  h+='<div class="tip">\uD83D\uDCA1 Spausk Kopijuoti \u2192 Google Sheet A1 \u2192 Ctrl+V</div><button class="bn" onclick="S.step=2;R()">Toliau \u2192</button></div>'}
 
-  if(s===2){h+='<div class="setup-step"><h2>2. Prid\u0117k Apps Script</h2><div class="instruction"><p>Google Sheet: <strong>Extensions \u2192 Apps Script</strong></p><p>I\u0161trink sen\u0105 kod\u0105, \u012Fklijuok \u0161\u012F:</p></div>';
-  h+='<div class="code-block"><div class="code-header"><span>Apps Script</span><button class="btn-copy" onclick="copyText(APPS_SCRIPT,this)">\uD83D\uDCCB Kopijuoti</button></div><pre class="code-content">'+APPS_SCRIPT.replace(/</g,"&lt;")+"</pre></div>";
-  h+='<div class="instruction" style="margin-top:16px"><p>Deploy:</p><ol><li><strong>Deploy \u2192 New deployment</strong></li><li>Type: <strong>Web app</strong></li><li>Execute as: <strong>Me</strong></li><li>Who has access: <strong>Anyone</strong></li><li><strong>Deploy</strong> \u2192 Authorize \u2192 <strong>Nusikopijuok URL</strong></li></ol></div>';
-  h+='<div class="btn-row"><button class="btn-back" onclick="state.setupStep=1;render()">\u2190 Atgal</button><button class="btn-next" onclick="state.setupStep=3;render()">Turiu URL \u2192</button></div></div>'}
+  if(s===2){h+='<div class="ss2"><h2>2. Apps Script</h2><div class="ins"><p><strong>Extensions \u2192 Apps Script</strong> \u2192 i\u0161trink sen\u0105 kod\u0105, \u012Fklijuok:</p></div>';
+  h+='<div class="cb"><div class="ch"><span>Kodas</span><button class="bcp" onclick="cp(AS,this)">\uD83D\uDCCB Kopijuoti</button></div><pre class="cc">'+AS.replace(/</g,"&lt;")+"</pre></div>";
+  h+='<div class="ins" style="margin-top:16px"><ol><li><strong>Deploy \u2192 New deployment</strong></li><li>Type: <strong>Web app</strong></li><li>Execute as: <strong>Me</strong>, Access: <strong>Anyone</strong></li><li><strong>Deploy</strong> \u2192 Authorize \u2192 Kopijuok URL</li></ol></div>';
+  h+='<div class="tip">\u26A0\uFE0F Jei atnaujini — <strong>Deploy \u2192 Manage deployments \u2192 Edit \u2192 Version: New \u2192 Deploy</strong></div>';
+  h+='<div class="br"><button class="bb" onclick="S.step=1;R()">\u2190</button><button class="bn" onclick="S.step=3;R()">Turiu URL \u2192</button></div></div>'}
 
-  if(s===3){h+='<div class="setup-step"><h2>3. \u012Evesk Script URL</h2><div class="instruction"><p>\u012Eklijuok Web App URL:</p></div>';
-  h+='<input type="url" class="url-input" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">';
-  h+='<button class="btn-test" id="btnTest" onclick="testUrl()">\uD83D\uDD17 Testuoti ry\u0161\u012F</button><div id="testResult"></div>';
-  h+='<button class="btn-test" id="btnSkip" style="display:none;border-color:var(--gas);color:var(--gas)" onclick="finishSetup()">\u23ED\uFE0F Praleisti test\u0105</button>';
-  h+='<div class="btn-row"><button class="btn-back" onclick="state.setupStep=2;render()">\u2190 Atgal</button><button class="btn-next" id="btnStart" onclick="finishSetup()">\uD83D\uDE80 Prad\u0117ti</button></div></div>'}
-
-  h+="</div>";return h;
+  if(s===3){h+='<div class="ss2"><h2>3. Script URL</h2><input type="url" class="ui" id="sUrl" placeholder="https://script.google.com/macros/s/.../exec">';
+  h+='<button class="bt" onclick="tUrl()">\uD83D\uDD17 Testuoti</button><div id="tR"></div>';
+  h+='<button class="bt" id="bSk" style="display:none;border-color:var(--gas);color:var(--gas)" onclick="finish()">\u23ED Praleisti test\u0105</button>';
+  h+='<div class="br"><button class="bb" onclick="S.step=2;R()">\u2190</button><button class="bn" onclick="finish()">\uD83D\uDE80 Prad\u0117ti</button></div></div>'}
+  return h+"</div>";
 }
 
-async function testUrl(){
-  const url=$("#scriptUrlInput").value.trim();if(!url)return;
-  $("#btnTest").textContent="\u23F3 Tikrinama...";$("#btnTest").disabled=true;
-  try{const r=await fetch(url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);
-    if(d.entries!==undefined){$("#testResult").innerHTML='<div class="test-result ok">\u2705 Ry\u0161ys veikia!</div>'}
-    else{$("#testResult").innerHTML='<div class="test-result fail">\u274C Netinkamas atsakymas</div>'}}
-  catch(e){$("#testResult").innerHTML='<div class="test-result fail">\u274C Nepavyko prisijungti.<br><small style="font-weight:400">Jei nar\u0161ykl\u0117je URL gra\u017Eina {"entries":[]}, spausk "Praleisti test\u0105".</small></div>';$("#btnSkip").style.display="block"}
-  $("#btnTest").textContent="\uD83D\uDD17 Testuoti ry\u0161\u012F";$("#btnTest").disabled=false;
+async function tUrl(){
+  const u=$("#sUrl").value.trim();if(!u)return;$("#tR").innerHTML="";
+  try{const r=await fetch(u,{redirect:"follow"});const d=JSON.parse(await r.text());
+    $("#tR").innerHTML=d.entries!==undefined?'<div class="tr ok">\u2705 Veikia!</div>':'<div class="tr fail">\u274C Blogas atsakymas</div>'}
+  catch(e){$("#tR").innerHTML='<div class="tr fail">\u274C Nepavyko. Jei nar\u0161ykl\u0117je URL veikia, spausk Praleisti.</div>';$("#bSk").style.display="block"}
 }
 
-function finishSetup(){
-  const el=$("#scriptUrlInput");const url=el?el.value.trim():state.scriptUrl;if(!url)return;
-  state.scriptUrl=url;localStorage.setItem("kalkv_url",url);render();fetchEntries();
-}
+function finish(){const el=$("#sUrl");const u=el?el.value.trim():S.url;if(!u)return;S.url=u;localStorage.setItem("kv_url",u);R();load()}
 
 // ── Form ──
-function renderForm(){
-  const w=state.lastWorker,dr=state.lastDryerTemp;
-  const oT=state.outdoorTemp!==null?state.outdoorTemp:"";
-  const oTag=oT!==""?'<span class="auto-tag">auto \xB7 Venta</span>':"";
-  const wTag=w?'<span class="auto-tag">auto</span>':"";
-  const dTag=dr?'<span class="auto-tag">auto</span>':"";
+function rForm(){
+  const ed=S.editEntry;
+  const w=ed?ed.worker:S.lastW;
+  const dr=ed?ed.dryerTemp:S.lastD;
+  const oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:"");
+  const dt=ed?ed.date:td();
+  const hr=ed?ed.hour:nt();
+  const q=ed?ed.quantity:"";
+  const g=ed?ed.gasMeter:"";
 
-  return'<div class="card"><h2>\u2795 Naujas \u012Fra\u0161as</h2><div class="form-grid">'
-  +'<div class="field date-field"><label>Data <span class="auto-tag">auto</span></label><input type="date" id="f_date" value="'+today()+'" class="auto-filled"></div>'
-  +'<div class="field"><label>Valanda <span class="auto-tag">auto</span></label><input type="time" id="f_hour" value="'+nowTime()+'" class="auto-filled"></div>'
-  +'<div class="field"><label>Darbuotojas '+wTag+'</label><input type="text" id="f_worker" value="'+w+'" placeholder="Vardas"'+(w?' class="auto-filled"':"")+'></div>'
-  +'<div class="field"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="f_quantity" placeholder="0"></div></div>'
+  let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti \u012Fra\u0161\u0105":"\u2795 Naujas \u012Fra\u0161as")+"</h2>";
+  h+='<div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div>';
+  h+='<div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div>';
+  h+='<div class="f"><label>Darbuotojas'+(w&&!ed?" <span class=\"at\">auto</span>":"")+'</label><input type="text" id="fw" value="'+w+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div>';
+  h+='<div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'" placeholder="0"></div></div>';
 
-  +'<div class="section-label gas-section"><span class="section-icon">\uD83D\uDD25</span> Dujos</div>'
-  +'<div class="form-grid"><div class="field"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="f_gas" placeholder="0" oninput="updateGasDiff()"></div>'
-  +'<div class="calculated" id="gasDiffBox" style="display:none"><span class="calc-label">Skirtumas</span><span class="calc-value" id="gasDiffVal">\u2014</span></div></div>'
+  h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg">';
+  h+='<div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" placeholder="0" oninput="ugd()"></div>';
+  h+='<div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
 
-  +'<div class="section-label elec-section"><span class="section-icon">\u26A1</span> Elektros skaitikliai</div>'
-  +'<div class="form-grid meters-grid">'+EL_METERS.map(m=>'<div class="field"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="f_el'+m+'" placeholder="0"></div>').join("")+'</div>'
+  h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">';
+  EL.forEach(m=>{h+='<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'" placeholder="0"></div>'});
+  h+="</div>";
 
-  +'<div class="section-label temp-section"><span class="section-icon">\uD83C\uDF21\uFE0F</span> Temperat\u016Bra</div>'
-  +'<div class="form-grid"><div class="field"><label>D\u017Eiovykl\u0117s \u00B0C '+dTag+'</label><input type="number" inputmode="decimal" step="any" id="f_dryer" value="'+dr+'" placeholder="0"'+(dr?' class="auto-filled"':"")+'></div>'
-  +'<div class="field"><label>Lauko \u00B0C '+oTag+'</label><input type="number" inputmode="decimal" step="any" id="f_outdoor" value="'+oT+'" placeholder="0"'+(oT!==""?' class="auto-filled"':"")+'></div></div>'
+  h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temperat\u016Bra</div><div class="fg">';
+  h+='<div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+dr+'"'+(dr&&!ed?' class="af"':"")+'></div>';
+  h+='<div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">auto \xB7 Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
 
-  +'<button class="btn-save" onclick="handleSave()" '+(state.saving?"disabled":"")+'>'+(state.saving?"\u23F3 Siun\u010Diama...":"\uD83D\uDCBE I\u0161saugoti")+'</button></div>';
+  h+='<button class="bsv'+(ed?" edit-mode":"")+'" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE I\u0161saugoti pakeitimus":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
+  if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">Atšaukti redagavim\u0105</button>';
+  return h+"</div>";
 }
 
-function updateGasDiff(){
-  const gi=$("#f_gas");if(!gi)return;
-  const last=state.entries.length>0?state.entries[state.entries.length-1]:null;if(!last)return;
-  const d=diff(gi.value,last.gasMeter);const box=$("#gasDiffBox");
-  if(d!==null){box.style.display="flex";$("#gasDiffVal").textContent=fmt(d)}else{box.style.display="none"}
+function ugd(){
+  const gi=$("#fg");if(!gi)return;
+  const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;
+  const d=df(gi.value,last.gasMeter),b=$("#gdb");
+  if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else{b.style.display="none"}
 }
 
-async function handleSave(){
-  const data={date:$("#f_date").value,hour:$("#f_hour").value,worker:$("#f_worker").value,
-    quantity:$("#f_quantity").value,gasMeter:$("#f_gas").value,
-    el480:$("#f_el480").value,el380:$("#f_el380").value,el183:$("#f_el183").value,
-    el184:$("#f_el184").value,el182:$("#f_el182").value,el181:$("#f_el181").value,
-    dryerTemp:$("#f_dryer").value,outdoorTemp:$("#f_outdoor").value};
-  if(!data.date)return;await saveEntry(data);render();
+async function hSave(){
+  const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,
+    quantity:$("#fq").value,gasMeter:$("#fg").value,
+    el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,
+    el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,
+    dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};
+  if(!d.date)return;
+  if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}
+  else{await saveNew(d)}
 }
 
 // ── Table ──
-function renderTable(){
-  const filtered=filterEntries(state.entries);
-  const presets=[{key:"today",label:"\u0160iandien"},{key:"week",label:"Savait\u0117"},{key:"month",label:"M\u0117nuo"},{key:"lastmonth",label:"Pra\u0117j\u0119s m\u0117n."},{key:"year",label:"Metai"},{key:"lastyear",label:"Pra\u0117j\u0119 metai"},{key:"all",label:"Viskas"},{key:"custom",label:"Pasirinkti..."}];
+function rTable(){
+  const fi=filt(S.entries);
+  const ps=[{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j. m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j. metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
+  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
+  if(S.fl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.ff+'" onchange="S.ff=this.value;R()"><span>Iki</span><input type="date" value="'+S.ft+'" onchange="S.ft=this.value;R()"></div>';
+  if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
 
-  let h='<div class="filter-bar">'+presets.map(p=>'<button class="filter-chip '+(state.filter===p.key?"active":"")+'" onclick="setFilter(\''+p.key+'\')">'+p.label+"</button>").join("")+"</div>";
+  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data</th><th>Val.</th><th>Darb.</th><th>Kiekis</th><th>Duj\u0173</th><th>D.\u0394</th>';
+  EL.forEach(m=>{h+="<th>"+m+"</th>"});
+  h+="<th>D\u017E.\u00B0C</th><th>L.\u00B0C</th><th class=\"ac\"></th></tr></thead><tbody>";
 
-  if(state.filter==="custom"){
-    h+='<div class="custom-range"><span>Nuo</span><input type="date" id="filterFrom" value="'+state.filterFrom+'" onchange="state.filterFrom=this.value;render()"><span>Iki</span><input type="date" id="filterTo" value="'+state.filterTo+'" onchange="state.filterTo=this.value;render()"></div>';
-  }
+  const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
 
-  if(filtered.length===0){return h+'<div class="empty-state"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173 \u0161iam laikotarpiui</p></div>'}
-
-  h+='<div class="table-wrapper"><div class="table-scroll"><table><thead><tr><th class="sticky-col">Data</th><th>Val.</th><th>Darb.</th><th>Kiekis</th><th>Duj\u0173 sk.</th><th>Duj\u0173 \u0394</th>';
-  h+=EL_METERS.map(m=>"<th>El."+m+"</th>").join("");
-  h+="<th>D\u017E.\u00B0C</th><th>Lauko\u00B0C</th></tr></thead><tbody>";
-
-  const idxMap=new Map();state.entries.forEach((e,i)=>idxMap.set(e,i));
-
-  filtered.forEach(e=>{
-    const idx=idxMap.get(e);const prev=idx>0?state.entries[idx-1]:null;
-    const gd=prev?diff(e.gasMeter,prev.gasMeter):null;
-    h+="<tr><td class=\"sticky-col\">"+e.date+"</td><td>"+(e.hour||"\u2014")+"</td><td class=\"worker-cell\">"+(e.worker||"\u2014")+"</td>";
-    h+="<td>"+fmt(e.quantity)+"</td><td>"+fmt(e.gasMeter)+"</td><td class=\"diff-cell\">"+fmt(gd)+"</td>";
-    h+=EL_METERS.map(m=>"<td>"+fmt(e["el"+m])+"</td>").join("");
-    h+="<td>"+fmt(e.dryerTemp)+"</td><td>"+fmt(e.outdoorTemp)+"</td></tr>";
+  fi.forEach(e=>{
+    const i=imap.get(e),prev=i>0?S.entries[i-1]:null,gd=prev?df(e.gasMeter,prev.gasMeter):null;
+    h+='<tr><td class="sc">'+e.date+"</td><td>"+(e.hour||"\u2014")+'</td><td class="wc">'+(e.worker||"\u2014")+"</td>";
+    h+="<td>"+fm(e.quantity)+"</td><td>"+fm(e.gasMeter)+'</td><td class="dc">'+fm(gd)+"</td>";
+    EL.forEach(m=>{h+="<td>"+fm(e["el"+m])+"</td>"});
+    h+="<td>"+fm(e.dryerTemp)+"</td><td>"+fm(e.outdoorTemp)+"</td>";
+    h+='<td class="ac"><button class="bi" title="Redaguoti" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" title="Trinti" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td></tr>';
   });
   h+="</tbody></table></div></div>";
 
   // Summary
-  if(filtered.length>=1){
-    const tQ=filtered.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
+  if(fi.length>=1){
+    const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
     let tG=0,tE=0;
-    filtered.forEach(e=>{const idx=idxMap.get(e);const prev=idx>0?state.entries[idx-1]:null;
-      if(prev){const gd=diff(e.gasMeter,prev.gasMeter);if(gd!==null)tG+=gd;
-        EL_METERS.forEach(m=>{const ed=diff(e["el"+m],prev["el"+m]);if(ed!==null)tE+=ed})}});
-    const gC=tG*state.settings.gasPrice,eC=tE*state.settings.elPrice,tC=gC+eC;
-    h+='<div class="card" style="margin-top:14px"><h2>\uD83D\uDCCA Suvestin\u0117</h2><div class="summary-grid">';
-    h+='<div class="stat"><span class="stat-label">Pagaminta</span><span class="stat-value">'+tQ.toFixed(1)+' t</span></div>';
-    h+='<div class="stat"><span class="stat-label">Duj\u0173 suv.</span><span class="stat-value">'+fmt(Math.round(tG))+'</span></div>';
-    h+='<div class="stat"><span class="stat-label">Duj\u0173 kaina</span><span class="stat-value">\u20AC'+gC.toFixed(2)+'</span></div>';
-    h+='<div class="stat"><span class="stat-label">Elektra suv.</span><span class="stat-value">'+fmt(Math.round(tE))+' kWh</span></div>';
-    h+='<div class="stat"><span class="stat-label">Elektros kaina</span><span class="stat-value">\u20AC'+eC.toFixed(2)+'</span></div>';
-    h+='<div class="stat"><span class="stat-label">Viso kaina</span><span class="stat-value">\u20AC'+tC.toFixed(2)+'</span></div>';
-    h+='<div class="stat"><span class="stat-label">\u20AC / t</span><span class="stat-value">'+(tQ>0?"\u20AC"+(tC/tQ).toFixed(2):"\u2014")+'</span></div>';
-    h+='<div class="stat"><span class="stat-label">\u012Era\u0161\u0173</span><span class="stat-value">'+filtered.length+'</span></div>';
-    h+='</div></div>';
+    fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
+      if(prev){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
+        EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d!==null)tE+=d})}});
+
+    // Use latest price from filtered entries, fallback to settings
+    let gP=S.cfg.gp,eP=S.cfg.ep;
+    for(let i=fi.length-1;i>=0;i--){
+      if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}
+    }
+
+    const gC=tG*gP,eC=tE*eP,tC=gC+eC;
+    h+='<div class="card" style="margin-top:14px"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+gP.toFixed(2)+' / el. \u20AC'+eP.toFixed(3)+')</span></h2><div class="sgr">';
+    h+='<div class="stt"><span class="sl">Pagaminta</span><span class="sv">'+tQ.toFixed(1)+' t</span></div>';
+    h+='<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(tG))+'</span></div>';
+    h+='<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+gC.toFixed(2)+'</span></div>';
+    h+='<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(tE))+' kWh</span></div>';
+    h+='<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+eC.toFixed(2)+'</span></div>';
+    h+='<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+tC.toFixed(2)+'</span></div>';
+    h+='<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(tQ>0?"\u20AC"+(tC/tQ).toFixed(2):"\u2014")+'</span></div>';
+    h+='<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div></div></div>';
   }
-  h+='<div style="text-align:center;margin-top:14px"><button class="btn-test" onclick="fetchEntries()">\uD83D\uDD04 Atnaujinti</button></div>';
+  h+='<div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
 
-function setFilter(key){state.filter=key;render()}
+function startEdit(i){
+  S.editEntry=S.entries[i];S.view="form";R();window.scrollTo({top:0,behavior:"smooth"});
+}
 
 // ── Settings ──
-function renderSettings(){
-  const s=state.settings;
+function rCfg(){
+  const c=S.cfg;
   return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2>'
-  +'<div class="section-label gas-section"><span class="section-icon">\uD83D\uDD25</span> Duj\u0173 kaina</div>'
-  +'<div class="form-grid"><div class="field"><label>\u20AC u\u017E vienet\u0105</label><input type="number" step="0.01" id="s_gasPrice" value="'+s.gasPrice+'"></div></div>'
-  +'<div class="section-label elec-section"><span class="section-icon">\u26A1</span> Elektros kaina</div>'
-  +'<div class="form-grid"><div class="field"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="s_elPrice" value="'+s.elPrice+'"></div></div>'
-  +'<div class="section-label settings-section"><span class="section-icon">\uD83D\uDD17</span> Google Sheets</div>'
-  +'<div class="field" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="s_url" value="'+state.scriptUrl+'" style="font-family:var(--mono);font-size:.8rem"></div>'
-  +'<button class="btn-settings-save" onclick="saveSettings()">\uD83D\uDCBE I\u0161saugoti nustatymus</button>'
-  +'<div style="text-align:center"><button class="btn-disconnect" onclick="resetSetup()">\uD83D\uDDD1\uFE0F Atjungti Google Sheets</button></div></div>';
+  +'<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div>'
+  +'<div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+c.gp+'"></div></div>'
+  +'<div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div>'
+  +'<div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+c.ep+'"></div></div>'
+  +'<div class="slbl ss"><span class="si">\uD83D\uDD17</span> Google Sheets</div>'
+  +'<div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div>'
+  +'<button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button>'
+  +'<div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti Sheets</button></div></div>';
 }
 
-function saveSettings(){
-  state.settings={gasPrice:parseFloat($("#s_gasPrice").value)||0,elPrice:parseFloat($("#s_elPrice").value)||0};
-  localStorage.setItem("kalkv_settings",JSON.stringify(state.settings));
-  const url=$("#s_url").value.trim();
-  if(url&&url!==state.scriptUrl){state.scriptUrl=url;localStorage.setItem("kalkv_url",url);fetchEntries()}
-  showToast("\u2705 Nustatymai i\u0161saugoti!");
+function sCfg(){
+  S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0};
+  localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));
+  const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u);load()}
+  toast("\u2705 I\u0161saugota!");
 }
 
-function resetSetup(){if(confirm("Atjungti Google Sheets?")){state.scriptUrl="";state.entries=[];localStorage.removeItem("kalkv_url");render()}}
+function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.removeItem("kv_url");R()}}
 
-// ── Main ──
-function render(){
-  const app=$("#app");
-  if(!state.scriptUrl){app.innerHTML=renderSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="subtitle">UAB Mortar Akmen\u0117</div></div>';
-  h+='<div class="status-badge"><div class="status-dot"></div> Sheets</div></div>';
-  h+='<div class="nav"><button class="'+(state.view==="form"?"active":"")+'" onclick="state.view=\'form\';render()">\u270F\uFE0F \u012Evedimas</button>';
-  h+='<button class="'+(state.view==="table"?"active":"")+'" onclick="state.view=\'table\';render()">\uD83D\uDCCB Duomenys</button>';
-  h+='<button class="'+(state.view==="settings"?"active":"")+'" onclick="state.view=\'settings\';render()">\u2699\uFE0F Nustatymai</button></div>';
-  if(state.view==="form")h+=renderForm();
-  if(state.view==="table")h+=renderTable();
-  if(state.view==="settings")h+=renderSettings();
-  h+="</div>";app.innerHTML=h;
+// ── Render ──
+function R(){
+  const a=$("#app");
+  if(!S.url){a.innerHTML=rSetup();return}
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117</div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
+  h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
+  h+='<button class="'+(S.view==="settings"?"active":"")+'" onclick="S.view=\'settings\';R()">\u2699\uFE0F Nust.</button></div>';
+  if(S.view==="form")h+=rForm();
+  if(S.view==="table")h+=rTable();
+  if(S.view==="settings")h+=rCfg();
+  a.innerHTML=h+"</div>";
 }
 
-render();
-if(state.scriptUrl)fetchEntries();
-fetchWeather().then(()=>{if(state.view==="form")render()});
+R();if(S.url)load();getWeather().then(()=>{if(S.view==="form")R()});
 </script>
 </body>
 </html>
