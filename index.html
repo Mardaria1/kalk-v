@@ -496,6 +496,7 @@ function R(){
 }
 
 R();if(S.url)load();getWeather().then(()=>{if(S.view==="form")R()});
+setInterval(()=>{getWeather().then(()=>{if(S.view==="form")R()})},1800000);
 </script>
 </body>
 </html>
