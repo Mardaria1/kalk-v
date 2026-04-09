@@ -59,6 +59,15 @@ thead .sc{background:var(--surface-2);z-index:3}
 .ac{text-align:center!important;white-space:nowrap}
 .bi{background:none;border:none;cursor:pointer;font-size:.8rem;padding:3px;opacity:.5;transition:opacity .15s}
 .bi:hover{opacity:1}
+/* New table cell styles */
+.td-date{font-weight:600;font-family:var(--font)}.td-time{color:var(--text-muted);font-size:.72rem;font-family:var(--font)}
+.td-tbadge{display:inline-block;background:rgba(59,130,246,.15);color:var(--accent);font-size:.62rem;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;font-family:var(--font)}
+.td-main{font-family:var(--mono);font-size:.78rem}.td-delta{display:block;font-family:var(--mono);font-size:.74rem;font-weight:600;color:var(--diff)}
+.td-qty{font-weight:700;font-size:.88rem;font-family:var(--mono)}
+.td-temps{display:flex;gap:6px;justify-content:flex-end;font-family:var(--mono);font-size:.76rem}
+.td-dry{color:#ef4444}.td-out{color:var(--ok)}
+.tbl-legend{display:flex;gap:14px;padding:8px 10px;font-size:.68rem;color:var(--text-muted);font-family:var(--font)}
+.tbl-legend .lp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
 .sgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .stt{background:var(--bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px}
 .stt .sl{font-size:.66rem;color:var(--text-muted);text-transform:uppercase;font-weight:600}
@@ -207,6 +216,16 @@ function pd(n){return n<10?"0"+n:""+n}
 function fd(d){return d.getFullYear()+"-"+pd(d.getMonth()+1)+"-"+pd(d.getDate())}
 function parseHour(v){if(!v)return"";const s=String(v);if(s.includes("T")){try{const d=new Date(s);if(!isNaN(d))return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}catch(e){}}if(/^\d{1,2}:\d{2}/.test(s))return s.slice(0,5);return s}
 function sNum(v){if(v===""||v===null||v===undefined)return"";const n=parseFloat(v);if(isNaN(n))return"";if(n>999999||n<-999999)return"";return v}
+function timeDelta(e1,e2){
+  if(!e1||!e2||!e1.date||!e2.date||!e1.hour||!e2.hour)return"";
+  var d1=new Date(e1.date+"T"+e1.hour),d2=new Date(e2.date+"T"+e2.hour);
+  if(isNaN(d1)||isNaN(d2))return"";
+  var mins=Math.round((d2-d1)/60000);if(mins<=0)return"";
+  var h=Math.floor(mins/60),m=mins%60;
+  return h>0?(h+"h "+pd(m)+"m"):(m+"m");
+}
+function elTotal(e){var t=0;EL.forEach(function(m){var v=parseFloat(e["el"+m]);if(!isNaN(v))t+=v});return t}
+function elDelta(e,prev){if(!prev)return null;var t=0,has=false;EL.forEach(function(m){var d=df(e["el"+m],prev["el"+m]);if(d!==null){t+=d;has=true}});return has?t:null}
 function cp(text,btn){try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}}
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
@@ -342,10 +361,25 @@ function rTable(){
   const fi=filt(S.entries),sm=calcSummary(fi);
   let h=rFilterBar()+rSummary(fi,sm);
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
-  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data</th><th>Val.</th><th>Darb.</th><th>Kiekis</th><th>Duj\u0173</th><th>D.\u0394</th>'+EL.map(m=>"<th>"+m+"</th>").join("")+'<th>D\u017E.\u00B0C</th><th>L.\u00B0C</th><th class="ac"></th></tr></thead><tbody>';
-  fi.forEach(e=>{const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,gd=prev?df(e.gasMeter,prev.gasMeter):null;
-    h+='<tr><td class="sc">'+e.date+"</td><td>"+(e.hour||"\u2014")+'</td><td class="wc">'+(e.worker||"\u2014")+"</td><td>"+fm(e.quantity)+"</td><td>"+fm(e.gasMeter)+'</td><td class="dc">'+fm(gd)+"</td>"+EL.map(m=>"<td>"+fm(e["el"+m])+"</td>").join("")+"<td>"+fm(e.dryerTemp)+"</td><td>"+fm(e.outdoorTemp)+'</td><td class="ac"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td></tr>'});
-  h+='</tbody></table></div></div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
+  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th class="ac"></th></tr></thead><tbody>';
+  fi.forEach(e=>{
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
+    const gd=prev?df(e.gasMeter,prev.gasMeter):null;
+    const ed=elDelta(e,prev);
+    const td2=prev?timeDelta(prev,e):"";
+    h+='<tr>';
+    h+='<td class="sc"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
+    h+='<td class="wc">'+(e.worker||"\u2014")+'</td>';
+    h+='<td style="text-align:right"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
+    h+='<td style="text-align:right"><span class="td-main">'+fm(e.gasMeter)+'</span>'+(gd!==null?'<span class="td-delta">\u0394 '+fm(gd)+'</span>':"")+'</td>';
+    h+='<td style="text-align:right"><span class="td-main">'+fm(elTotal(e))+'</span>'+(ed!==null?'<span class="td-delta">\u0394 '+fm(ed)+'</span>':"")+'</td>';
+    h+='<td style="text-align:right"><span class="td-temps"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></span></td>';
+    h+='<td class="ac"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span></div>';
+  h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
 function startEdit(i){S.editEntry=S.entries[i];S.view="form";R();window.scrollTo({top:0,behavior:"smooth"})}
