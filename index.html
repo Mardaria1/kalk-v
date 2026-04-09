@@ -356,9 +356,12 @@ function rCharts(){
   let h=rFilterBar()+rSummary(fi,sm);
   if(fi.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDCC8</div><p>Reikia bent 2 \u012Fra\u0161\u0173 grafikams</p></div>';
   h+='<div class="report-actions"><button class="btn-pdf" onclick="genPDF()">\uD83D\uDCC4 Eksportuoti PDF</button></div>';
-  h+='<div class="chart-grid"><div class="chart-card"><h3>\uD83C\uDFED Gamyba pagal dienas (t)</h3><canvas id="chProd"></canvas></div>';
-  h+='<div class="chart-card"><h3>\uD83D\uDD25 Duj\u0173 suv. nuo lauko temp.</h3><canvas id="chGasTemp"></canvas></div>';
-  h+='<div class="chart-card" style="grid-column:1/-1"><h3>\u20AC Ka\u0161tai pagal dienas + Lauko temp.</h3><canvas id="chCost"></canvas></div></div>';
+  h+='<div class="chart-grid">';
+  h+='<div class="chart-card"><h3>\uD83D\uDCE6 Gamyba per dien\u0105 (t)</h3><canvas id="chProd"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDD25 Duj\u0173 s\u0105naudos / t</h3><canvas id="chGasPerT"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDCB0 Savikaina \u20AC/t</h3><canvas id="chCostPerT"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83C\uDF21\uFE0F Dujos vs Lauko temp.</h3><canvas id="chScatter"></canvas></div>';
+  h+='</div>';
   return h;
 }
 
@@ -383,14 +386,15 @@ function drawCharts(){
   });
 
   const dayKeys=Object.keys(days).sort();
-  const labels=dayKeys.map(d=>d.slice(5));
+  const labels=dayKeys.map(d=>{var p=d.split("-");return p[1]+"-"+p[2]});
   const qtyD=dayKeys.map(d=>days[d].qty);
-  const gasD=dayKeys.map(d=>days[d].gas);
-  const costGD=dayKeys.map(d=>days[d].gas*sm.gP);
-  const costED=dayKeys.map(d=>days[d].el*sm.eP);
-  const tempD=dayKeys.map(d=>days[d].temps.length?days[d].temps.reduce((a,b)=>a+b,0)/days[d].temps.length:null);
+  const gasPerT=dayKeys.map(d=>days[d].qty>0?Math.round(days[d].gas/days[d].qty):null);
+  const costPerT=dayKeys.map(d=>{
+    if(days[d].qty<=0)return null;
+    return+(( days[d].gas*sm.gP + days[d].el*sm.eP ) / days[d].qty).toFixed(2);
+  });
 
-  // Scatter: gas vs outdoor temp (per entry, not per day)
+  // Scatter: gas consumption vs outdoor temp (per entry)
   const scatter=[];
   fi.forEach(e=>{
     const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
@@ -400,21 +404,20 @@ function drawCharts(){
   });
 
   Object.values(charts).forEach(c=>c.destroy());charts={};
-  const dark={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}};
-  const darkR={...dark,position:"right",grid:{drawOnChartArea:false,color:"rgba(255,255,255,.06)"}};
+  const xAxis={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10},maxRotation:45,minRotation:45}};
+  const yAxis={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}};
 
-  // 1. Production by day
-  charts.prod=new Chart($("#chProd"),{type:"bar",data:{labels,datasets:[{label:"Kiekis, t",data:qtyD,backgroundColor:"rgba(59,130,246,.6)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:dark,y:dark}}});
+  // 1. Production per day
+  charts.prod=new Chart($("#chProd"),{type:"bar",data:{labels,datasets:[{label:"t",data:qtyD,backgroundColor:"rgba(59,130,246,.6)",borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:xAxis,y:{...yAxis,beginAtZero:true}}}});
 
-  // 2. Gas consumption vs outdoor temp (scatter)
-  charts.gasTemp=new Chart($("#chGasTemp"),{type:"scatter",data:{datasets:[{label:"Dujos / Temp.",data:scatter,backgroundColor:"rgba(245,158,11,.7)",pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{...dark,title:{display:true,text:"Lauko \u00B0C",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...dark,title:{display:true,text:"Duj\u0173 suv.",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
+  // 2. Gas per ton (efficiency)
+  charts.gasPerT=new Chart($("#chGasPerT"),{type:"line",data:{labels,datasets:[{label:"Dujos/t",data:gasPerT,borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,.1)",fill:true,tension:.3,pointRadius:4,pointBackgroundColor:"#f59e0b",spanGaps:true}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:xAxis,y:yAxis}}});
 
-  // 3. Costs by day + temp line on second axis
-  charts.cost=new Chart($("#chCost"),{type:"bar",data:{labels,datasets:[
-    {label:"Dujos \u20AC",data:costGD,backgroundColor:"rgba(245,158,11,.6)",borderRadius:4,yAxisID:"y"},
-    {label:"Elektra \u20AC",data:costED,backgroundColor:"rgba(6,182,212,.6)",borderRadius:4,yAxisID:"y"},
-    {label:"Lauko \u00B0C",data:tempD,type:"line",borderColor:"#10b981",backgroundColor:"rgba(16,185,129,.1)",tension:.3,pointRadius:3,yAxisID:"y1",spanGaps:true}
-  ]},options:{responsive:true,plugins:{legend:{labels:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}}},scales:{x:dark,y:{...dark,title:{display:true,text:"\u20AC",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y1:{...darkR,title:{display:true,text:"\u00B0C",color:"#10b981",font:{family:"DM Sans",size:11}},ticks:{color:"#10b981",font:{family:"DM Sans",size:10}}}}}});
+  // 3. Cost per ton
+  charts.costPerT=new Chart($("#chCostPerT"),{type:"line",data:{labels,datasets:[{label:"\u20AC/t",data:costPerT,borderColor:"#8b5cf6",backgroundColor:"rgba(139,92,246,.1)",fill:true,tension:.3,pointRadius:4,pointBackgroundColor:"#8b5cf6",spanGaps:true}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:xAxis,y:yAxis}}});
+
+  // 4. Gas vs outdoor temp (scatter)
+  charts.scatter=new Chart($("#chScatter"),{type:"scatter",data:{datasets:[{label:"Dujos / Temp.",data:scatter,backgroundColor:"rgba(245,158,11,.7)",pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{...yAxis,title:{display:true,text:"Lauko \u00B0C",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...yAxis,title:{display:true,text:"Duj\u0173 suv.",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
 }
 
 // ── PDF ──
