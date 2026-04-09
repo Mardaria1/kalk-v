@@ -270,7 +270,7 @@ function siloTons(pct){return siloVol(pct)*S.cfg.dn}
 function siloDiff(before,after){
   var b=parseFloat(before),a=parseFloat(after);
   if(isNaN(b)||isNaN(a))return null;
-  return siloTons(b)-siloTons(a); // produced = before - after (level drops)
+  return siloTons(a)-siloTons(b); // produced = after - before (level rises)
 }
 
 // ── Form ──
@@ -302,7 +302,7 @@ function calcSilo(){
     fq.value=d.toFixed(1);fq.classList.add("af");
     if(tag)tag.style.display="inline";
   }else if(d!==null&&d<0){
-    box.style.display="flex";val.textContent="⚠ Lygis pakilo";
+    box.style.display="flex";val.textContent="⚠ Lygis nukrito";
     fq.value="";fq.classList.remove("af");if(tag)tag.style.display="none";
   }else{
     box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";
