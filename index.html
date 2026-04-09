@@ -62,10 +62,13 @@ thead .sc{background:var(--surface-2);z-index:3}
 /* New table cell styles */
 .td-date{font-weight:600;font-family:var(--font)}.td-time{color:var(--text-muted);font-size:.72rem;font-family:var(--font)}
 .td-tbadge{display:inline-block;background:rgba(59,130,246,.15);color:var(--accent);font-size:.62rem;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;font-family:var(--font)}
-.td-main{font-family:var(--mono);font-size:.78rem}.td-delta{display:block;font-family:var(--mono);font-size:.74rem;font-weight:600;color:var(--diff)}
+.td-main{font-family:var(--mono);font-size:.78rem;display:block}
+.td-row{display:flex;justify-content:flex-end;gap:8px;margin-top:2px}
+.td-delta{font-family:var(--mono);font-size:.72rem;font-weight:600;color:var(--diff)}
+.td-gpt{font-family:var(--mono);font-size:.72rem;color:var(--text-muted)}
 .td-qty{font-weight:700;font-size:.88rem;font-family:var(--mono)}
-.td-temps{display:flex;gap:6px;justify-content:flex-end;font-family:var(--mono);font-size:.76rem}
-.td-dry{color:#ef4444}.td-out{color:var(--ok)}
+.td-dry{font-family:var(--mono);font-size:.78rem;color:#ef4444;display:block}
+.td-out{font-family:var(--mono);font-size:.72rem;color:var(--ok);display:block;margin-top:1px}
 .tbl-legend{display:flex;gap:14px;padding:8px 10px;font-size:.68rem;color:var(--text-muted);font-family:var(--font)}
 .tbl-legend .lp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
 .sgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
@@ -367,14 +370,20 @@ function rTable(){
     const gd=prev?df(e.gasMeter,prev.gasMeter):null;
     const ed=elDelta(e,prev);
     const td2=prev?timeDelta(prev,e):"";
+    const qty=parseFloat(e.quantity)||0;
+    const gpt=(gd!==null&&qty>0)?Math.round(gd/qty):null;
     h+='<tr>';
-    h+='<td class="sc"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
-    h+='<td class="wc">'+(e.worker||"\u2014")+'</td>';
-    h+='<td style="text-align:right"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
-    h+='<td style="text-align:right"><span class="td-main">'+fm(e.gasMeter)+'</span>'+(gd!==null?'<span class="td-delta">\u0394 '+fm(gd)+'</span>':"")+'</td>';
-    h+='<td style="text-align:right"><span class="td-main">'+fm(elTotal(e))+'</span>'+(ed!==null?'<span class="td-delta">\u0394 '+fm(ed)+'</span>':"")+'</td>';
-    h+='<td style="text-align:right"><span class="td-temps"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></span></td>';
-    h+='<td class="ac"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td>';
+    h+='<td class="sc" style="vertical-align:top"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
+    h+='<td class="wc" style="vertical-align:top">'+(e.worker||"\u2014")+'</td>';
+    h+='<td style="text-align:right;vertical-align:top"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
+    h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(e.gasMeter)+'</span>';
+    if(gd!==null){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(gd)+'</span>'+(gpt!==null?'<span class="td-gpt">'+gpt+'/t</span>':"")+'</div>'}
+    h+='</td>';
+    h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(elTotal(e))+'</span>';
+    if(ed!==null){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
+    h+='</td>';
+    h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></td>';
+    h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
