@@ -278,11 +278,13 @@ function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:
 let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div></div>';
 
 // Silo calculator
-h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas → Kiekis</div>';
-h+='<div class="fg"><div class="f"><label>Silosas prie\u0161 %</label><input type="number" inputmode="decimal" step="any" id="fs1" placeholder="pvz. 80" oninput="calcSilo()"></div>';
+h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas \u2192 Kiekis</div>';
+h+='<div class="fg">';
+h+='<div class="f"><label>Silosas prie\u0161 %</label><input type="number" inputmode="decimal" step="any" id="fs1" placeholder="pvz. 80" oninput="calcSilo()"></div>';
 h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 45" oninput="calcSilo()"></div>';
-h+='<div class="calc" id="siloRes" style="display:none"><span class="cl">Pagaminta</span><span class="cv" id="siloVal">\u2014</span></div></div>';
-h+='<div class="fg" style="margin-top:8px"><div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div></div>';
+h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div>';
+h+='</div>';
+h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
 
 h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
 h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">'+EL.map(m=>'<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'"></div>').join("")+"</div>";
@@ -292,12 +294,19 @@ if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</but
 return h+"</div>"}
 
 function calcSilo(){
-  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq");
-  if(!s1||!s2)return;
+  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
+  if(!s1||!s2||!fq)return;
   var d=siloDiff(s1.value,s2.value);
-  if(d!==null&&d>=0){box.style.display="flex";val.textContent=d.toFixed(1)+" t";fq.value=d.toFixed(1)}
-  else if(d!==null&&d<0){box.style.display="flex";val.textContent="⚠ Lygis pakilo";fq.value=""}
-  else{box.style.display="none"}
+  if(d!==null&&d>=0){
+    box.style.display="flex";val.textContent=d.toFixed(1)+" t";
+    fq.value=d.toFixed(1);fq.classList.add("af");
+    if(tag)tag.style.display="inline";
+  }else if(d!==null&&d<0){
+    box.style.display="flex";val.textContent="⚠ Lygis pakilo";
+    fq.value="";fq.classList.remove("af");if(tag)tag.style.display="none";
+  }else{
+    box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";
+  }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
 async function hSave(){const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
