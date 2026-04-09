@@ -123,9 +123,14 @@ const EL=["480","380","183","184","182","181"],VL=56.35,VN=22.30;
 const SH="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tDuju_kaina\tEl_kaina\tTimestamp";
 const AS=`function fixNum(v) {
   if (v instanceof Date) return "";
-  if (typeof v === "number") return v;
+  if (typeof v === "number") {
+    if (v > 999999 || v < -999999) return "";
+    return v;
+  }
   var n = Number(v);
-  return isNaN(n) ? (v || "") : n;
+  if (isNaN(n)) return (v || "");
+  if (n > 999999 || n < -999999) return "";
+  return n;
 }
 
 function doGet(e) {
@@ -201,6 +206,7 @@ function df(a,b){if(a===""||a==null||b===""||b==null)return null;const x=parseFl
 function pd(n){return n<10?"0"+n:""+n}
 function fd(d){return d.getFullYear()+"-"+pd(d.getMonth()+1)+"-"+pd(d.getDate())}
 function parseHour(v){if(!v)return"";const s=String(v);if(s.includes("T")){try{const d=new Date(s);if(!isNaN(d))return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}catch(e){}}if(/^\d{1,2}:\d{2}/.test(s))return s.slice(0,5);return s}
+function sNum(v){if(v===""||v===null||v===undefined)return"";const n=parseFloat(v);if(isNaN(n))return"";if(n>999999||n<-999999)return"";return v}
 function cp(text,btn){try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}}
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
@@ -222,7 +228,7 @@ function calcSummary(fi){
   return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap};
 }
 
-async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
+async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
 async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
