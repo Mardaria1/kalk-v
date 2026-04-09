@@ -225,7 +225,9 @@ function calcSummary(fi){
       EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d!==null)tE+=d})}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
-  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap};
+  let sumDry=0,cntDry=0,sumOut=0,cntOut=0;
+  fi.forEach(e=>{const d=parseFloat(e.dryerTemp);if(!isNaN(d)){sumDry+=d;cntDry++}const o=parseFloat(e.outdoorTemp);if(!isNaN(o)){sumOut+=o;cntOut++}});
+  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null};
 }
 
 async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
@@ -274,7 +276,10 @@ function rSummary(fi,sm){
   +'<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+sm.eC.toFixed(2)+'</span></div>'
   +'<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+sm.tC.toFixed(2)+'</span></div>'
   +'<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
-  +'<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div></div></div>';
+  +'<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div>'
+  +'<div class="stt"><span class="sl">Vid. d\u017Eiov. \u00B0C</span><span class="sv">'+(sm.avgDry!==null?sm.avgDry.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
+  +'<div class="stt"><span class="sl">Vid. lauko \u00B0C</span><span class="sv">'+(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
+  +'</div></div>';
 }
 
 // ── Table ──
