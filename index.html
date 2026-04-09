@@ -360,7 +360,7 @@ function rCharts(){
   h+='<div class="chart-card"><h3>\uD83D\uDCE6 Gamyba per dien\u0105 (t)</h3><canvas id="chProd"></canvas></div>';
   h+='<div class="chart-card"><h3>\uD83D\uDD25 Duj\u0173 s\u0105naudos / t</h3><canvas id="chGasPerT"></canvas></div>';
   h+='<div class="chart-card"><h3>\uD83D\uDCB0 Savikaina \u20AC/t</h3><canvas id="chCostPerT"></canvas></div>';
-  h+='<div class="chart-card"><h3>\uD83C\uDF21\uFE0F Dujos vs Lauko temp.</h3><canvas id="chScatter"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83C\uDF21\uFE0F Dujos/t vs Vid. lauko temp.</h3><canvas id="chScatter"></canvas></div>';
   h+='</div>';
   return h;
 }
@@ -394,13 +394,15 @@ function drawCharts(){
     return+(( days[d].gas*sm.gP + days[d].el*sm.eP ) / days[d].qty).toFixed(2);
   });
 
-  // Scatter: gas consumption vs outdoor temp (per entry)
+  // Scatter: gas per ton vs avg daily outdoor temp (aggregated by day)
   const scatter=[];
-  fi.forEach(e=>{
-    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
-    const gd=prev?df(e.gasMeter,prev.gasMeter):null;
-    const ot=parseFloat(e.outdoorTemp);
-    if(gd!==null&&gd>0&&!isNaN(ot))scatter.push({x:ot,y:gd});
+  dayKeys.forEach(d=>{
+    const day=days[d];
+    if(day.qty>0&&day.temps.length>0){
+      const avgTemp=day.temps.reduce((a,b)=>a+b,0)/day.temps.length;
+      const gasPerTon=day.gas/day.qty;
+      scatter.push({x:+avgTemp.toFixed(1),y:+gasPerTon.toFixed(0),label:d.slice(5)});
+    }
   });
 
   Object.values(charts).forEach(c=>c.destroy());charts={};
@@ -417,7 +419,7 @@ function drawCharts(){
   charts.costPerT=new Chart($("#chCostPerT"),{type:"line",data:{labels,datasets:[{label:"\u20AC/t",data:costPerT,borderColor:"#8b5cf6",backgroundColor:"rgba(139,92,246,.1)",fill:true,tension:.3,pointRadius:4,pointBackgroundColor:"#8b5cf6",spanGaps:true}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:xAxis,y:yAxis}}});
 
   // 4. Gas vs outdoor temp (scatter)
-  charts.scatter=new Chart($("#chScatter"),{type:"scatter",data:{datasets:[{label:"Dujos / Temp.",data:scatter,backgroundColor:"rgba(245,158,11,.7)",pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{...yAxis,title:{display:true,text:"Lauko \u00B0C",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...yAxis,title:{display:true,text:"Duj\u0173 suv.",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
+  charts.scatter=new Chart($("#chScatter"),{type:"scatter",data:{datasets:[{label:"Dujos/t",data:scatter,backgroundColor:"rgba(245,158,11,.7)",pointRadius:6,pointHoverRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw.label+": "+c.raw.x+"\u00B0C, "+c.raw.y+" dujos/t"}}}},scales:{x:{...yAxis,title:{display:true,text:"Vid. lauko \u00B0C",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...yAxis,title:{display:true,text:"Dujos / t",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
 }
 
 // ── PDF ──
