@@ -195,7 +195,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -280,8 +280,9 @@ let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</
 // Silo calculator
 h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas \u2192 Kiekis</div>';
 h+='<div class="fg">';
-h+='<div class="f"><label>Silosas prie\u0161 %</label><input type="number" inputmode="decimal" step="any" id="fs1" placeholder="pvz. 80" oninput="calcSilo()"></div>';
-h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 45" oninput="calcSilo()"></div>';
+var sp=ed?"":S.lastSilo;
+h+='<div class="f"><label>Silosas prie\u0161 %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs1" value="'+sp+'" placeholder="pvz. 0" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+'></div>';
+h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 43" oninput="calcSilo()"></div>';
 h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div>';
 h+='</div>';
 h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
@@ -309,7 +310,7 @@ function calcSilo(){
   }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
-async function hSave(){const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
+async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
 function rFilterBar(){
