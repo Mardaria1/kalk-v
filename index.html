@@ -195,7 +195,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20},fl:"month",ff:"",ft:"",editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -245,15 +245,60 @@ return h+"</div>"}
 async function tUrl(){const u=$("#sUrl").value.trim();if(!u)return;try{const r=await fetch(u,{redirect:"follow"});const d=JSON.parse(await r.text());$("#tR").innerHTML=d.entries!==undefined?'<div class="tr ok">\u2705 Veikia!</div>':'<div class="tr fail">\u274C Blogas</div>'}catch(e){$("#tR").innerHTML='<div class="tr fail">\u274C Nepavyko. Jei URL veikia nar\u0161ykl\u0117je, spausk Praleisti.</div>';$("#bSk").style.display="block"}}
 function finish(){const el=$("#sUrl");const u=el?el.value.trim():S.url;if(!u)return;S.url=u;localStorage.setItem("kv_url",u);R();load()}
 
+// ── Silo calculator ──
+// Cylinder: ø3400 x 4700mm, Cone: ø3400→ø250 x 3450mm, Total H=8150mm
+const SILO={cyl_h:4700,cyl_r:1700,cone_h:3450,cone_r_top:1700,cone_r_bot:125,total_h:8150,density:1.4};
+function siloVol(pct){
+  if(pct<=0)return 0;if(pct>=100)pct=100;
+  var h=pct/100*SILO.total_h; // fill height in mm
+  var vCone=0,vCyl=0;
+  // Cone zone (0 to 3450mm)
+  var hc=Math.min(h,SILO.cone_h);
+  if(hc>0){
+    var rBot=SILO.cone_r_bot,slope=(SILO.cone_r_top-SILO.cone_r_bot)/SILO.cone_h;
+    var rTop=rBot+slope*hc;
+    vCone=Math.PI/3*hc*(rBot*rBot+rBot*rTop+rTop*rTop); // mm³
+  }
+  // Cylinder zone (3450 to 8150mm)
+  if(h>SILO.cone_h){
+    var hCyl=Math.min(h-SILO.cone_h,SILO.cyl_h);
+    vCyl=Math.PI*SILO.cyl_r*SILO.cyl_r*hCyl; // mm³
+  }
+  return(vCone+vCyl)/1e9; // m³
+}
+function siloTons(pct){return siloVol(pct)*S.cfg.dn}
+function siloDiff(before,after){
+  var b=parseFloat(before),a=parseFloat(after);
+  if(isNaN(b)||isNaN(a))return null;
+  return siloTons(b)-siloTons(a); // produced = before - after (level drops)
+}
+
 // ── Form ──
 function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:S.lastD,oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:""),dt=ed?ed.date:td(),hr=ed?ed.hour:nt(),q=ed?ed.quantity:"",g=ed?ed.gasMeter:"";
-let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div><div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div></div>';
+let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div></div>';
+
+// Silo calculator
+h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas → Kiekis</div>';
+h+='<div class="fg"><div class="f"><label>Silosas prie\u0161 %</label><input type="number" inputmode="decimal" step="any" id="fs1" placeholder="pvz. 80" oninput="calcSilo()"></div>';
+h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 45" oninput="calcSilo()"></div>';
+h+='<div class="calc" id="siloRes" style="display:none"><span class="cl">Pagaminta</span><span class="cv" id="siloVal">\u2014</span></div></div>';
+h+='<div class="fg" style="margin-top:8px"><div class="f"><label>Kiekis, t</label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div></div>';
+
 h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
 h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">'+EL.map(m=>'<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'"></div>').join("")+"</div>";
 h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
 h+='<button class="bsv'+(ed?" em":"")+'" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE Atnaujinti":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
 if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</button>';
 return h+"</div>"}
+
+function calcSilo(){
+  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq");
+  if(!s1||!s2)return;
+  var d=siloDiff(s1.value,s2.value);
+  if(d!==null&&d>=0){box.style.display="flex";val.textContent=d.toFixed(1)+" t";fq.value=d.toFixed(1)}
+  else if(d!==null&&d<0){box.style.display="flex";val.textContent="⚠ Lygis pakilo";fq.value=""}
+  else{box.style.display="none"}
+}
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
 async function hSave(){const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
@@ -386,8 +431,8 @@ function genPDF(){
 }
 
 // ── Settings ──
-function rCfg(){return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2><div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+S.cfg.gp+'"></div></div><div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+S.cfg.ep+'"></div></div><div class="slbl sst"><span class="si">\uD83D\uDD17</span> Google Sheets</div><div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div><button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button><div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti</button></div></div>'}
-function sCfg(){S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0};localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u);load()}toast("\u2705 I\u0161saugota!")}
+function rCfg(){return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2><div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+S.cfg.gp+'"></div></div><div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+S.cfg.ep+'"></div></div><div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas</div><div class="fg"><div class="f"><label>Med\u017Eiagos tankis, t/m\u00B3</label><input type="number" step="0.01" id="cdn" value="'+S.cfg.dn+'"></div></div><div class="slbl sst"><span class="si">\uD83D\uDD17</span> Google Sheets</div><div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div><button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button><div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti</button></div></div>'}
+function sCfg(){S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0,dn:parseFloat($("#cdn").value)||1.4};localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u);load()}toast("\u2705 I\u0161saugota!")}
 function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.removeItem("kv_url");R()}}
 
 // ── Render ──
