@@ -132,7 +132,7 @@ thead .sc{background:var(--surface-2);z-index:3}
 <div id="app"></div>
 <script>
 const EL=["480","380","183","184","182","181"],VL=56.35,VN=22.30;
-const SH="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tDuju_kaina\tEl_kaina\tTimestamp";
+const SH="Data\tValanda\tDarbuotojas\tKiekis_t\tDuju_skaitiklis\tEl_480\tEl_380\tEl_183\tEl_184\tEl_182\tEl_181\tDziovykles_temp\tLauko_temp\tDuju_kaina\tEl_kaina\tTimestamp\tGran_apsukos\tVandens_kiekis\tUztvara_cm";
 const AS=`function fixNum(v) {
   if (v instanceof Date) return "";
   if (typeof v === "number") {
@@ -207,7 +207,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -252,7 +252,7 @@ function calcSummary(fi){
   return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null};
 }
 
-async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
+async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD;S.lastRpm=l.granRpm||S.lastRpm;S.lastWater=l.waterFlow||S.lastWater;S.lastWeir=l.weirHeight||S.lastWeir}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
 async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
@@ -297,6 +297,7 @@ function siloDiff(before,after){
 
 // ── Form ──
 function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:S.lastD,oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:""),dt=ed?ed.date:td(),hr=ed?ed.hour:nt(),q=ed?ed.quantity:"",g=ed?ed.gasMeter:"";
+var rpm=ed?ed.granRpm:S.lastRpm,wfl=ed?ed.waterFlow:S.lastWater,weir=ed?ed.weirHeight:S.lastWeir;
 let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div></div>';
 
 // Silo calculator
@@ -312,6 +313,11 @@ h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span cla
 h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
 h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">'+EL.map(m=>'<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'"></div>').join("")+"</div>";
 h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
+h+='<div class="slbl" style="color:#06b6d4;background:rgba(6,182,212,.08)"><span class="si">\u2699\uFE0F</span> Granuliatorius</div><div class="fg">';
+h+='<div class="f"><label>Apsukos'+(rpm&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="frpm" value="'+(rpm||"")+'"'+(rpm&&!ed?' class="af"':"")+'></div>';
+h+='<div class="f"><label>Vandens kiekis'+(wfl&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fwfl" value="'+(wfl||"")+'"'+(wfl&&!ed?' class="af"':"")+'></div>';
+h+='<div class="f"><label>U\u017Etvaros auk\u0161tis, cm'+(weir&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fweir" value="'+(weir||"")+'"'+(weir&&!ed?' class="af"':"")+'></div>';
+h+='</div>';
 h+='<button class="bsv'+(ed?" em":"")+'" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE Atnaujinti":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
 if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</button>';
 return h+"</div>"}
@@ -332,7 +338,7 @@ function calcSilo(){
   }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
-async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
+async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
 function rFilterBar(){
