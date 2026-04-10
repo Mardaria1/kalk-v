@@ -370,7 +370,7 @@ function rTable(){
   const fi=filt(S.entries),sm=calcSummary(fi);
   let h=rFilterBar()+rSummary(fi,sm);
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
-  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th class="ac"></th></tr></thead><tbody>';
+  h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th style="text-align:right">Gran.</th><th class="ac"></th></tr></thead><tbody>';
   fi.forEach(e=>{
     const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
     const gd=prev?df(e.gasMeter,prev.gasMeter):null;
@@ -389,11 +389,12 @@ function rTable(){
     if(ed!==null){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
     h+='</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></td>';
+    h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.72rem;line-height:1.5;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.6rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.6rem">H\u2082O</span><br>'+(e.weirHeight||"\u2014")+' <span style="font-size:.6rem">cm</span></td>';
     h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / H\u2082O / cm</span></div>';
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
