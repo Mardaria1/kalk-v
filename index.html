@@ -248,8 +248,12 @@ function calcSummary(fi){
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
   let sumDry=0,cntDry=0,sumOut=0,cntOut=0;
-  fi.forEach(e=>{const d=parseFloat(e.dryerTemp);if(!isNaN(d)){sumDry+=d;cntDry++}const o=parseFloat(e.outdoorTemp);if(!isNaN(o)){sumOut+=o;cntOut++}});
-  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null};
+  let totalMins=0;
+  fi.forEach(e=>{const d=parseFloat(e.dryerTemp);if(!isNaN(d)){sumDry+=d;cntDry++}const o=parseFloat(e.outdoorTemp);if(!isNaN(o)){sumOut+=o;cntOut++}
+    const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
+    if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
+  const tph=totalMins>0?tQ/(totalMins/60):null;
+  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,tph,totalMins};
 }
 
 async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD;S.lastRpm=l.granRpm||S.lastRpm;S.lastWater=l.waterFlow||S.lastWater;S.lastWeir=l.weirHeight||S.lastWeir}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
@@ -360,6 +364,7 @@ function rSummary(fi,sm){
   if(fi.length<1)return"";
   return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2><div class="sgr">'
   +'<div class="stt"><span class="sl">Pagaminta</span><span class="sv">'+sm.tQ.toFixed(1)+' t</span></div>'
+  +'<div class="stt"><span class="sl">t / valand\u0105</span><span class="sv">'+(sm.tph!==null?sm.tph.toFixed(1):'\u2014')+'</span></div>'
   +'<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(sm.tG))+'</span></div>'
   +'<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+sm.gC.toFixed(2)+'</span></div>'
   +'<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(sm.tE))+' kWh</span></div>'
@@ -401,7 +406,7 @@ function rTable(){
     h+='</tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / l/min H\u2082O / Sklendės aukštis cm</span></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / l/min H\u2082O / Sklendės aukštis cm</span></div>'
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
@@ -504,6 +509,7 @@ function genPDF(){
     head:[["Rodiklis","Reiksme"]],
     body:[
       ["Pagaminta",sm.tQ.toFixed(1)+" t"],
+      ["t / valanda",sm.tph!==null?sm.tph.toFixed(1):"\u2014"],
       ["Duju suvartojimas",Math.round(sm.tG).toString()],
       ["Duju kaina","\u20AC"+sm.gC.toFixed(2)+" (\u20AC"+sm.gP.toFixed(2)+"/vnt)"],
       ["Elektros suvartojimas",Math.round(sm.tE)+" kWh"],
