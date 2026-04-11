@@ -256,7 +256,14 @@ async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
 async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
-async function deleteEntry(row){if(!confirm("I\u0161trinti?"))return;if(await post({action:"delete",row})){toast("\u2705 I\u0161trinta!");await load()}else toast("\u274C Klaida","fail")}
+let deleting=false;
+async function deleteEntry(row,date,hour){
+  if(deleting)return;
+  if(!confirm("Ar tikrai i\u0161trinti \u012Fra\u0161\u0105?\n"+date+" "+(hour||"")))return;
+  deleting=true;R();
+  if(await post({action:"delete",row})){toast("\u2705 I\u0161trinta!");await load()}else toast("\u274C Klaida","fail");
+  deleting=false;
+}
 
 // ── Setup ──
 function rSetup(){const s=S.step;let h='<div class="setup"><div class="setup-header"><div class="setup-icon">\u2699\uFE0F</div><h1>Konfig\u016Bracija</h1><p>Sujungsime su Google Sheets</p></div><div class="si2">'+[1,2,3].map(n=>'<div class="sd '+(s>=n?"a":"")+" "+(s===n?"c":"")+'">'+(s>n?"\u2713":n)+"</div>").join("")+"</div>";
@@ -390,7 +397,7 @@ function rTable(){
     h+='</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></td>';
     h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.72rem;line-height:1.5;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.6rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.6rem">H\u2082O</span><br>'+(e.weirHeight||"\u2014")+' <span style="font-size:.6rem">cm</span></td>';
-    h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi" onclick="deleteEntry('+e.row+')">\uD83D\uDDD1\uFE0F</button></td>';
+    h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
