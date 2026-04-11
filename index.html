@@ -79,6 +79,11 @@ thead .sc{background:var(--surface-2);z-index:3}
 .fc{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:var(--font);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .fc.active{background:var(--accent);color:#fff;border-color:var(--accent)}.fc:hover{border-color:var(--accent)}
 .cr{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.day-nav{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:14px}
+.dn-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);width:40px;height:40px;border-radius:8px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.dn-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dn-btn:active{transform:scale(.95)}
+.dn-date{font-family:var(--mono);font-size:.95rem;font-weight:600;min-width:110px;text-align:center}
 .cr input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font);font-size:.8rem;outline:none}
 .cr span{color:var(--text-muted);font-size:.8rem}
 /* Charts */
@@ -207,7 +212,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",dayDate:td(),editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -234,7 +239,13 @@ function toast(m,t){const e=document.createElement("div");e.className="toast "+(
 
 async function getWeather(){try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}}
 
-function gfr(k){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;switch(k){case"today":return{a:td(),b:td()};case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}};case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};case"year":return{a:y+"-01-01",b:y+"-12-31"};case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};case"all":return{a:"",b:""};case"custom":return{a:S.ff,b:S.ft};default:return{a:"",b:""}}}
+function gfr(k){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;switch(k){case"day":return{a:S.dayDate,b:S.dayDate};case"today":return{a:td(),b:td()};case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}};case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};case"year":return{a:y+"-01-01",b:y+"-12-31"};case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};case"all":return{a:"",b:""};case"custom":return{a:S.ff,b:S.ft};default:return{a:"",b:""}}}
+
+function dayShift(dir){
+  var p=S.dayDate.split("-"),dt=new Date(+p[0],+p[1]-1,+p[2]);
+  dt.setDate(dt.getDate()+dir);
+  S.dayDate=fd(dt);S.fl="day";R();
+}
 function filt(arr){const r=gfr(S.fl);if(!r.a&&!r.b)return arr;return arr.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true})}
 
 // Compute summary data for filtered entries
@@ -353,8 +364,9 @@ async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd
 
 // ── Filter bar HTML ──
 function rFilterBar(){
-  const ps=[{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j.m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j.metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
-  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
+  const ps=[{k:"day",l:"Diena"},{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j.m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j.metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
+  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="'+(p.k==="day"?"S.dayDate=td();":"")+' S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
+  if(S.fl==="day"){h+='<div class="day-nav"><button class="dn-btn" onclick="dayShift(-1)">\u25C0</button><span class="dn-date">'+S.dayDate+'</span><button class="dn-btn" onclick="dayShift(1)">\u25B6</button></div>'}
   if(S.fl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.ff+'" onchange="S.ff=this.value;R()"><span>Iki</span><input type="date" value="'+S.ft+'" onchange="S.ft=this.value;R()"></div>';
   return h;
 }
@@ -406,7 +418,7 @@ function rTable(){
     h+='</tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / l/min H\u2082O / Sklendės aukštis cm</span></div>'
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / l/min H\u2082O / Sklendės aukštis cm</span></div>';
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
