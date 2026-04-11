@@ -242,8 +242,8 @@ function calcSummary(fi){
   const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
   const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
   let tG=0,tE=0;
-  fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
-    if(prev){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
+  fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;const qty=parseFloat(e.quantity)||0;
+    if(prev&&qty>0){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
       EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d!==null)tE+=d})}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
@@ -383,10 +383,10 @@ function rTable(){
     h+='<td class="wc" style="vertical-align:top">'+(e.worker||"\u2014")+'</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(e.gasMeter)+'</span>';
-    if(gd!==null){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(gd)+'</span>'+(gpt!==null?'<span class="td-gpt">'+gpt+'/t</span>':"")+'</div>'}
+    if(gd!==null&&qty>0){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(gd)+'</span>'+(gpt!==null?'<span class="td-gpt">'+gpt+'/t</span>':"")+'</div>'}
     h+='</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(elTotal(e))+'</span>';
-    if(ed!==null){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
+    if(ed!==null&&qty>0){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
     h+='</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></td>';
     h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.72rem;line-height:1.5;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.6rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.6rem">H\u2082O</span><br>'+(e.weirHeight||"\u2014")+' <span style="font-size:.6rem">cm</span></td>';
@@ -424,8 +424,9 @@ function drawCharts(){
   const days={};
   fi.forEach(e=>{
     const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
-    const gd=prev?df(e.gasMeter,prev.gasMeter):0;
-    let ed=0;if(prev)EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d)ed+=d});
+    const qty0=parseFloat(e.quantity)||0;
+    const gd=(prev&&qty0>0)?df(e.gasMeter,prev.gasMeter):0;
+    let ed=0;if(prev&&qty0>0)EL.forEach(m=>{const d=df(e["el"+m],prev["el"+m]);if(d)ed+=d});
     if(!days[e.date])days[e.date]={qty:0,gas:0,el:0,temps:[],n:0};
     const day=days[e.date];
     day.qty+=parseFloat(e.quantity)||0;
