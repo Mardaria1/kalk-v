@@ -411,30 +411,38 @@ function cmpVal(a,b,unit,inv){
   return'<span class="'+cls+'">'+arrow+(d>=0?"+":"")+d.toFixed(1)+(unit||"")+" ("+(d>=0?"+":"")+pct.toFixed(0)+"%)</span>";
 }
 
+function fmtHours(mins){if(!mins)return"\u2014";var h=Math.floor(mins/60),m=mins%60;return h+"h "+pd(m)+"m"}
+
 function rComparison(fi1,sm1,fi2,sm2){
   var r1=gfr(S.fl,S.dayDate,S.ff,S.ft),r2=gfr(S.cfl,S.cDayDate,S.cff,S.cft);
-  var l1=(r1.a||"...")+"\u2013"+(r1.b||"..."),l2=(r2.a||"...")+"\u2013"+(r2.b||"...");
+  var l1=r1.a===r1.b?r1.a:(r1.a||"...")+"\u2013"+(r1.b||"...");
+  var l2=r2.a===r2.b?r2.a:(r2.a||"...")+"\u2013"+(r2.b||"...");
   var ept1=sm1.tQ>0?(sm1.tC/sm1.tQ):null,ept2=sm2.tQ>0?(sm2.tC/sm2.tQ):null;
   var rows=[
     ["Pagaminta",sm1.tQ.toFixed(1)+" t",sm2.tQ.toFixed(1)+" t",cmpVal(sm1.tQ,sm2.tQ," t")],
-    ["t / valand\u0105",sm1.tph!==null?sm1.tph.toFixed(1):"\u2014",sm2.tph!==null?sm2.tph.toFixed(1):"\u2014",sm1.tph!==null&&sm2.tph!==null?cmpVal(sm1.tph,sm2.tph):"\u2014"],
+    ["Gamybos laikas",fmtHours(sm1.totalMins),fmtHours(sm2.totalMins),""],
+    ["t / val.",sm1.tph!==null?sm1.tph.toFixed(1):"\u2014",sm2.tph!==null?sm2.tph.toFixed(1):"\u2014",sm1.tph!==null&&sm2.tph!==null?cmpVal(sm1.tph,sm2.tph):"\u2014"],
     ["Duj\u0173 suv.",fm(Math.round(sm1.tG)),fm(Math.round(sm2.tG)),cmpVal(sm1.tG,sm2.tG,"",true)],
     ["\u20AC / t",ept1!==null?"\u20AC"+ept1.toFixed(2):"\u2014",ept2!==null?"\u20AC"+ept2.toFixed(2):"\u2014",ept1!==null&&ept2!==null?cmpVal(ept1,ept2,"\u20AC",true):"\u2014"],
     ["Viso \u20AC","\u20AC"+sm1.tC.toFixed(2),"\u20AC"+sm2.tC.toFixed(2),cmpVal(sm1.tC,sm2.tC,"\u20AC",true)],
-    ["Vid. d\u017Eiov. \u00B0C",sm1.avgDry!==null?sm1.avgDry.toFixed(1)+"\u00B0":"\u2014",sm2.avgDry!==null?sm2.avgDry.toFixed(1)+"\u00B0":"\u2014",sm1.avgDry!==null&&sm2.avgDry!==null?cmpVal(sm1.avgDry,sm2.avgDry,"\u00B0"):"\u2014"],
-    ["Vid. lauko \u00B0C",sm1.avgOut!==null?sm1.avgOut.toFixed(1)+"\u00B0":"\u2014",sm2.avgOut!==null?sm2.avgOut.toFixed(1)+"\u00B0":"\u2014",sm1.avgOut!==null&&sm2.avgOut!==null?cmpVal(sm1.avgOut,sm2.avgOut,"\u00B0"):"\u2014"],
-    ["\u012Era\u0161\u0173",""+fi1.length,""+fi2.length,cmpVal(fi1.length,fi2.length)]
+    ["D\u017Eiov. \u00B0C",sm1.avgDry!==null?sm1.avgDry.toFixed(1)+"\u00B0":"\u2014",sm2.avgDry!==null?sm2.avgDry.toFixed(1)+"\u00B0":"\u2014",sm1.avgDry!==null&&sm2.avgDry!==null?cmpVal(sm1.avgDry,sm2.avgDry,"\u00B0"):"\u2014"],
+    ["Lauko \u00B0C",sm1.avgOut!==null?sm1.avgOut.toFixed(1)+"\u00B0":"\u2014",sm2.avgOut!==null?sm2.avgOut.toFixed(1)+"\u00B0":"\u2014",sm1.avgOut!==null&&sm2.avgOut!==null?cmpVal(sm1.avgOut,sm2.avgOut,"\u00B0"):"\u2014"],
+    ["\u012Era\u0161\u0173",""+fi1.length,""+fi2.length,""]
   ];
   var h='<div class="card"><h2>\u2194 Palyginimas</h2>';
-  h+='<table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-size:.7rem;border-bottom:1px solid var(--border)">Rodiklis</th>';
-  h+='<th style="text-align:right;padding:6px 8px;color:var(--accent);font-size:.7rem;border-bottom:1px solid var(--border)">'+l1+'</th>';
-  h+='<th style="text-align:right;padding:6px 8px;color:var(--diff);font-size:.7rem;border-bottom:1px solid var(--border)">'+l2+'</th>';
-  h+='<th style="text-align:right;padding:6px 8px;color:var(--text-muted);font-size:.7rem;border-bottom:1px solid var(--border)">\u0394</th></tr></thead><tbody>';
+  h+='<div style="display:flex;gap:12px;margin-bottom:12px;font-size:.75rem;flex-wrap:wrap">';
+  h+='<span style="color:var(--accent);font-weight:600">\u25CF A: '+l1+'</span>';
+  h+='<span style="color:var(--diff);font-weight:600">\u25CF B: '+l2+'</span></div>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:.8rem"><thead><tr>';
+  h+='<th style="text-align:left;padding:5px 6px;color:var(--text-muted);font-size:.68rem;border-bottom:1px solid var(--border)"></th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--accent);font-size:.72rem;font-weight:700;border-bottom:1px solid var(--border)">A</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--diff);font-size:.72rem;font-weight:700;border-bottom:1px solid var(--border)">B</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--text-muted);font-size:.68rem;border-bottom:1px solid var(--border)">\u0394</th></tr></thead><tbody>';
   rows.forEach(r=>{
-    h+='<tr><td style="padding:5px 8px;color:var(--text-muted)">'+r[0]+'</td>';
-    h+='<td style="text-align:right;padding:5px 8px;font-family:var(--mono);font-weight:600">'+r[1]+'</td>';
-    h+='<td style="text-align:right;padding:5px 8px;font-family:var(--mono);font-weight:600">'+r[2]+'</td>';
-    h+='<td style="text-align:right;padding:5px 8px;font-family:var(--mono);font-size:.76rem">'+r[3]+'</td></tr>';
+    h+='<tr><td style="padding:4px 6px;color:var(--text-muted);font-size:.76rem">'+r[0]+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-weight:600;font-size:.78rem">'+r[1]+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-weight:600;font-size:.78rem">'+r[2]+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.72rem">'+r[3]+'</td></tr>';
   });
   h+='</tbody></table></div>';
   return h;
@@ -461,12 +469,13 @@ function rSummary(fi,sm){
 // ── Table ──
 function rTable(){
   const fi=filt(S.entries),sm=calcSummary(fi);
-  let h=rFilterBar()+rSummary(fi,sm);
+  let h=rFilterBar();
   if(S.cmp){
     const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
     return h;
   }
+  h+=rSummary(fi,sm);
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
   h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th style="text-align:right">Gran.</th><th class="ac"></th></tr></thead><tbody>';
   fi.forEach(e=>{
@@ -501,12 +510,13 @@ function startEdit(i){S.editEntry=S.entries[i];S.view="form";R();window.scrollTo
 // ── Charts + PDF ──
 function rCharts(){
   const fi=filt(S.entries),sm=calcSummary(fi);
-  let h=rFilterBar()+rSummary(fi,sm);
+  let h=rFilterBar();
   if(S.cmp){
     const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
     return h;
   }
+  h+=rSummary(fi,sm);
   if(fi.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDCC8</div><p>Reikia bent 2 \u012Fra\u0161\u0173 grafikams</p></div>';
   h+='<div class="report-actions"><button class="btn-pdf" onclick="genPDF()">\uD83D\uDCC4 Eksportuoti PDF</button></div>';
   h+='<div class="chart-grid">';
