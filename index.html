@@ -379,7 +379,7 @@ function rTable(){
     const qty=parseFloat(e.quantity)||0;
     const gpt=(gd!==null&&qty>0)?Math.round(gd/qty):null;
     h+='<tr>';
-    h+='<td class="sc" style="vertical-align:top"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
+    h+='<td class="sc" style="vertical-align:top"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2&&qty>0?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
     h+='<td class="wc" style="vertical-align:top">'+(e.worker||"\u2014")+'</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(e.gasMeter)+'</span>';
