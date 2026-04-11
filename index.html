@@ -230,7 +230,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",dayDate:td(),cmp:false,cfl:"lastmonth",cff:"",cft:"",cDayDate:td(),editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -257,20 +257,15 @@ function toast(m,t){const e=document.createElement("div");e.className="toast "+(
 
 async function getWeather(){try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}}
 
-function gfr(k,dd,ff2,ft2){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate(),dow=n.getDay()||7;switch(k){case"day":return{a:dd||S.dayDate,b:dd||S.dayDate};case"today":return{a:td(),b:td()};case"week":{const a=new Date(y,m,d-dow+1),b=new Date(y,m,d-dow+7);return{a:fd(a),b:fd(b)}};case"month":return{a:y+"-"+pd(m+1)+"-01",b:fd(new Date(y,m+1,0))};case"lastmonth":return{a:(m===0?y-1:y)+"-"+pd(m===0?12:m)+"-01",b:fd(new Date(y,m,0))};case"year":return{a:y+"-01-01",b:y+"-12-31"};case"lastyear":return{a:(y-1)+"-01-01",b:(y-1)+"-12-31"};case"all":return{a:"",b:""};case"custom":return{a:ff2||S.ff,b:ft2||S.ft};default:return{a:"",b:""}}}
 
-function dayShift(dir){
-  var p=S.dayDate.split("-"),dt=new Date(+p[0],+p[1]-1,+p[2]);
-  dt.setDate(dt.getDate()+dir);
-  S.dayDate=fd(dt);S.fl="day";R();
+function navShift(dir){S.navOff+=dir;R()}
+
+function filt(arr){
+  if(S.fl==="all")return arr;
+  if(S.fl==="custom"){return arr.filter(e=>{if(!e.date)return false;if(S.ff&&e.date<S.ff)return false;if(S.ft&&e.date>S.ft)return false;return true})}
+  var r=shiftRange(S.fl,S.navOff);return arr.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true});
 }
-function cDayShift(dir){
-  var p=S.cDayDate.split("-"),dt=new Date(+p[0],+p[1]-1,+p[2]);
-  dt.setDate(dt.getDate()+dir);
-  S.cDayDate=fd(dt);S.cfl="day";R();
-}
-function filtWith(arr,k,dd,ff2,ft2){const r=gfr(k,dd,ff2,ft2);if(!r.a&&!r.b)return arr;return arr.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true})}
-function filt(arr){return filtWith(arr,S.fl,S.dayDate,S.ff,S.ft)}
+function filtCmp(){var r=shiftRange(S.fl,S.cmpOff);if(!r.a&&!r.b)return S.entries;return S.entries.filter(e=>{if(!e.date)return false;if(r.a&&e.date<r.a)return false;if(r.b&&e.date>r.b)return false;return true})}
 
 // Compute summary data for filtered entries
 function calcSummary(fi){
@@ -387,17 +382,36 @@ function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.e
 async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
+function shiftRange(type,off){
+  var n=new Date(),y=n.getFullYear(),m=n.getMonth(),d=n.getDate();
+  switch(type){
+    case"day":case"today":{var dt=new Date(y,m,d+off);return{a:fd(dt),b:fd(dt)}}
+    case"week":{var dow=n.getDay()||7;var mon=new Date(y,m,d-dow+1+off*7),sun=new Date(y,m,d-dow+7+off*7);return{a:fd(mon),b:fd(sun)}}
+    case"month":case"lastmonth":{var base=(type==="lastmonth")?m-1:m;var nm=base+off;var yr=y+Math.floor(nm/12);nm=((nm%12)+12)%12;return{a:yr+"-"+pd(nm+1)+"-01",b:fd(new Date(yr,nm+1,0))}}
+    case"year":case"lastyear":{var base=(type==="lastyear")?y-1:y;return{a:(base+off)+"-01-01",b:(base+off)+"-12-31"}}
+    default:return{a:"",b:""}
+  }
+}
+
+function cmpLabel(type,off){
+  var r=shiftRange(type,off);
+  if(!r.a)return"";
+  return r.a===r.b?r.a:r.a+"\u2013"+r.b;
+}
+
 function rFilterBar(){
-  const ps=[{k:"day",l:"Diena"},{k:"today",l:"\u0160iandien"},{k:"week",l:"Savait\u0117"},{k:"month",l:"M\u0117nuo"},{k:"lastmonth",l:"Pra\u0117j.m\u0117n."},{k:"year",l:"Metai"},{k:"lastyear",l:"Pra\u0117j.metai"},{k:"all",l:"Viskas"},{k:"custom",l:"Datos..."}];
-  let h='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.fl===p.k?"active":"")+'" onclick="'+(p.k==="day"?"S.dayDate=td();":"")+' S.fl=\''+p.k+"';R()\">"+p.l+"</button>").join("");
-  h+='<button class="cmp-toggle'+(S.cmp?" active":"")+'" onclick="S.cmp=!S.cmp;R()">\u2194 Palyginti</button></div>';
-  if(S.fl==="day"){h+='<div class="day-nav"><button class="dn-btn" onclick="dayShift(-1)">\u25C0</button><span class="dn-date">'+S.dayDate+'</span><button class="dn-btn" onclick="dayShift(1)">\u25B6</button></div>'}
+  const psAll=[{k:"day",l:"Diena",o:0},{k:"today",l:"\u0160iandien",t:"day",o:0},{k:"week",l:"Savait\u0117",o:0},{k:"month",l:"M\u0117nuo",o:0},{k:"lastmonth",l:"Pra\u0117j.m\u0117n.",t:"month",o:-1},{k:"year",l:"Metai",o:0},{k:"lastyear",l:"Pra\u0117j.metai",t:"year",o:-1},{k:"all",l:"Viskas",o:0},{k:"custom",l:"Datos...",o:0}];
+  const psShort=[{k:"day",l:"Diena",o:0},{k:"week",l:"Savait\u0117",o:0},{k:"month",l:"M\u0117nuo",o:0},{k:"year",l:"Metai",o:0}];
+  var canNav=S.fl!=="all"&&S.fl!=="custom";
+  var ps=S.cmp&&canNav?psShort:psAll;
+  let h='<div class="fb">'+ps.map(p=>{var fk=p.t||p.k;return'<button class="fc '+(S.fl===fk&&S.navOff===p.o?"active":"")+'" onclick="S.fl=\''+fk+"';S.navOff="+p.o+";S.cmpOff=-1;R()\">"+p.l+"</button>"}).join("");
+  if(canNav)h+='<button class="cmp-toggle'+(S.cmp?" active":"")+'" onclick="S.cmp=!S.cmp;S.cmpOff=-1;R()">\u2194 Palyginti</button>';
+  h+='</div>';
+  if(canNav){h+='<div class="day-nav"><button class="dn-btn" onclick="navShift(-1)">\u25C0</button><span class="dn-date">'+cmpLabel(S.fl,S.navOff)+'</span><button class="dn-btn" onclick="navShift(1)">\u25B6</button></div>'}
   if(S.fl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.ff+'" onchange="S.ff=this.value;R()"><span>Iki</span><input type="date" value="'+S.ft+'" onchange="S.ft=this.value;R()"></div>';
-  if(S.cmp){
+  if(S.cmp&&canNav){
     h+='<div class="cmp-label">\u2194 Palyginti su:</div>';
-    h+='<div class="fb">'+ps.map(p=>'<button class="fc '+(S.cfl===p.k?"active":"")+'" onclick="'+(p.k==="day"?"S.cDayDate=td();":"")+'S.cfl=\''+p.k+"';R()\">"+p.l+"</button>").join("")+"</div>";
-    if(S.cfl==="day"){h+='<div class="day-nav"><button class="dn-btn" onclick="cDayShift(-1)">\u25C0</button><span class="dn-date">'+S.cDayDate+'</span><button class="dn-btn" onclick="cDayShift(1)">\u25B6</button></div>'}
-    if(S.cfl==="custom")h+='<div class="cr"><span>Nuo</span><input type="date" value="'+S.cff+'" onchange="S.cff=this.value;R()"><span>Iki</span><input type="date" value="'+S.cft+'" onchange="S.cft=this.value;R()"></div>';
+    h+='<div class="day-nav"><button class="dn-btn" onclick="S.cmpOff--;R()">\u25C0</button><span class="dn-date">'+cmpLabel(S.fl,S.cmpOff)+'</span><button class="dn-btn" onclick="S.cmpOff++;R()">\u25B6</button></div>';
   }
   return h;
 }
@@ -414,7 +428,7 @@ function cmpVal(a,b,unit,inv){
 function fmtHours(mins){if(!mins)return"\u2014";var h=Math.floor(mins/60),m=mins%60;return h+"h "+pd(m)+"m"}
 
 function rComparison(fi1,sm1,fi2,sm2){
-  var r1=gfr(S.fl,S.dayDate,S.ff,S.ft),r2=gfr(S.cfl,S.cDayDate,S.cff,S.cft);
+  var r1=shiftRange(S.fl,S.navOff),r2=shiftRange(S.fl,S.cmpOff);
   var l1=r1.a===r1.b?r1.a:(r1.a||"...")+"\u2013"+(r1.b||"...");
   var l2=r2.a===r2.b?r2.a:(r2.a||"...")+"\u2013"+(r2.b||"...");
   var ept1=sm1.tQ>0?(sm1.tC/sm1.tQ):null,ept2=sm2.tQ>0?(sm2.tC/sm2.tQ):null;
@@ -470,8 +484,8 @@ function rSummary(fi,sm){
 function rTable(){
   const fi=filt(S.entries),sm=calcSummary(fi);
   let h=rFilterBar();
-  if(S.cmp){
-    const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
+  if(S.cmp&&S.fl!=="all"&&S.fl!=="custom"){
+    const fi2=filtCmp(),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
     return h;
   }
@@ -511,8 +525,8 @@ function startEdit(i){S.editEntry=S.entries[i];S.view="form";R();window.scrollTo
 function rCharts(){
   const fi=filt(S.entries),sm=calcSummary(fi);
   let h=rFilterBar();
-  if(S.cmp){
-    const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
+  if(S.cmp&&S.fl!=="all"&&S.fl!=="custom"){
+    const fi2=filtCmp(),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
     return h;
   }
@@ -599,7 +613,7 @@ function genPDF(){
   doc.text("KALK V Gamybos Ataskaita",14,18);
   doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(100);
   doc.text("UAB Mortar Akmene",14,25);
-  const range=gfr(S.fl);
+  const range=shiftRange(S.fl,S.navOff);
   doc.text("Laikotarpis: "+(range.a||"...")+"\u2014"+(range.b||"..."),14,31);
   doc.text("Sugeneruota: "+new Date().toLocaleString("lt-LT"),14,37);
 
