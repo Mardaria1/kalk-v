@@ -101,6 +101,7 @@ thead .sc{background:var(--surface-2);z-index:3}
 .cmp-dr .cl2{color:var(--text-muted)}
 .cmp-dr .cv2{font-family:var(--mono);font-weight:600}
 .cmp-dr .up{color:var(--ok)}.cmp-dr .dn{color:var(--danger)}
+span.up{color:#10b981;font-weight:700}span.dn{color:#ef4444;font-weight:700}
 .cr input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font);font-size:.8rem;outline:none}
 .cr span{color:var(--text-muted);font-size:.8rem}
 /* Charts */
@@ -405,8 +406,9 @@ function cmpVal(a,b,unit,inv){
   if(a===null||b===null)return'\u2014';
   var d=a-b,pct=b!==0?((d/Math.abs(b))*100):0;
   var cls=inv?(d<=0?"up":"dn"):(d>=0?"up":"dn");
-  if(d===0)cls="";
-  return'<span class="'+cls+'">'+(d>=0?"+":"")+d.toFixed(1)+(unit||"")+" ("+(d>=0?"+":"")+pct.toFixed(0)+"%)</span>";
+  var arrow=inv?(d<=0?"\u25BC ":"\u25B2 "):(d>=0?"\u25B2 ":"\u25BC ");
+  if(d===0){cls="";arrow=""}
+  return'<span class="'+cls+'">'+arrow+(d>=0?"+":"")+d.toFixed(1)+(unit||"")+" ("+(d>=0?"+":"")+pct.toFixed(0)+"%)</span>";
 }
 
 function rComparison(fi1,sm1,fi2,sm2){
@@ -463,6 +465,7 @@ function rTable(){
   if(S.cmp){
     const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
+    return h;
   }
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
   h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th style="text-align:right">Gran.</th><th class="ac"></th></tr></thead><tbody>';
@@ -489,7 +492,7 @@ function rTable(){
     h+='</tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / H\u2082O / cm</span></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / l/min H\u2082O / Sklendės aukštis cm</span></div>';
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
@@ -502,6 +505,7 @@ function rCharts(){
   if(S.cmp){
     const fi2=filtWith(S.entries,S.cfl,S.cDayDate,S.cff,S.cft),sm2=calcSummary(fi2);
     h+=rComparison(fi,sm,fi2,sm2);
+    return h;
   }
   if(fi.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDCC8</div><p>Reikia bent 2 \u012Fra\u0161\u0173 grafikams</p></div>';
   h+='<div class="report-actions"><button class="btn-pdf" onclick="genPDF()">\uD83D\uDCC4 Eksportuoti PDF</button></div>';
