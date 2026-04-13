@@ -347,6 +347,7 @@ h+='<div class="fg">';
 var sp=ed?"":S.lastSilo;
 h+='<div class="f"><label>Silosas prie\u0161 %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs1" value="'+sp+'" placeholder="pvz. 0" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 43" oninput="calcSilo()"></div>';
+h+='<div class="f"><label>I\u0161krauta, t</label><input type="number" inputmode="decimal" step="any" id="fload" value="0" oninput="calcSilo()"></div>';
 h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div>';
 h+='</div>';
 h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
@@ -364,18 +365,21 @@ if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</but
 return h+"</div>"}
 
 function calcSilo(){
-  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
+  var s1=$("#fs1"),s2=$("#fs2"),fl=$("#fload"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
   if(!s1||!s2||!fq)return;
-  var d=siloDiff(s1.value,s2.value);
-  if(d!==null&&d>=0){
-    box.style.display="flex";val.textContent=d.toFixed(1)+" t";
+  var b=parseFloat(s1.value),a=parseFloat(s2.value),loaded=parseFloat(fl?fl.value:0)||0;
+  if(isNaN(b)||isNaN(a)){box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";return}
+  var d=(siloTons(a)-siloTons(b))+loaded;
+  if(d>=0){
+    box.style.display="flex";
+    var detail="Silosas: "+(siloTons(a)-siloTons(b)>=0?"+":"")+(siloTons(a)-siloTons(b)).toFixed(1)+" t";
+    if(loaded>0)detail+=" + i\u0161kr. "+loaded.toFixed(1)+" t";
+    val.textContent=d.toFixed(1)+" t"+(loaded>0?" ("+detail+")":"");
     fq.value=d.toFixed(1);fq.classList.add("af");
     if(tag)tag.style.display="inline";
-  }else if(d!==null&&d<0){
-    box.style.display="flex";val.textContent="⚠ Lygis nukrito";
-    fq.value="";fq.classList.remove("af");if(tag)tag.style.display="none";
   }else{
-    box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";
+    box.style.display="flex";val.textContent="\u26A0 Neigiamas rezultatas ("+d.toFixed(1)+" t)";
+    fq.value="";fq.classList.remove("af");if(tag)tag.style.display="none";
   }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
