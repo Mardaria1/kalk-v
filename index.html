@@ -230,7 +230,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",oTemp:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastFeedRpm:localStorage.getItem("kv_feedrpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",lastGas:localStorage.getItem("kv_gas")||"",oTemp:null,oHum:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -255,7 +255,7 @@ function elDelta(e,prev){if(!prev)return null;var t=0,has=false;EL.forEach(funct
 function cp(text,btn){try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}}
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
-async function getWeather(){try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature}catch(e){}}
+async function getWeather(){try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+VL+"&longitude="+VN+"&current=temperature_2m,relative_humidity_2m&timezone=Europe%2FVilnius");const d=await r.json();if(d.current&&d.current.temperature_2m!=null)S.oTemp=d.current.temperature_2m;else if(d.current_weather)S.oTemp=d.current_weather.temperature;if(d.current&&d.current.relative_humidity_2m!=null)S.oHum=d.current.relative_humidity_2m}catch(e){}}
 
 
 function navShift(dir){S.navOff+=dir;R()}
@@ -286,7 +286,7 @@ function calcSummary(fi){
   return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,tph,totalMins};
 }
 
-async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD;S.lastRpm=l.granRpm||S.lastRpm;S.lastWater=l.waterFlow||S.lastWater;S.lastWeir=l.weirHeight||S.lastWeir}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
+async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter)});S.entries=d.entries;if(S.entries.length>0){const l=S.entries[S.entries.length-1];S.lastW=l.worker||S.lastW;S.lastD=l.dryerTemp||S.lastD;S.lastRpm=l.granRpm||S.lastRpm;S.lastFeedRpm=l.feedRpm||S.lastFeedRpm;S.lastWater=l.waterFlow||S.lastWater;S.lastWeir=l.weirHeight||S.lastWeir;S.lastGas=l.gasMeter||S.lastGas;S.lastSilo=l.siloAfter||S.lastSilo}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
 async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
@@ -337,8 +337,8 @@ function siloDiff(before,after){
 }
 
 // ── Form ──
-function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:S.lastD,oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:""),dt=ed?ed.date:td(),hr=ed?ed.hour:nt(),q=ed?ed.quantity:"",g=ed?ed.gasMeter:"";
-var rpm=ed?ed.granRpm:S.lastRpm,wfl=ed?ed.waterFlow:S.lastWater,weir=ed?ed.weirHeight:S.lastWeir;
+function rForm(){const ed=S.editEntry,w=ed?ed.worker:S.lastW,dr=ed?ed.dryerTemp:S.lastD,oT=ed?ed.outdoorTemp:(S.oTemp!==null?S.oTemp:""),oH=ed?ed.outdoorHumidity:(S.oHum!==null?S.oHum:""),dt=ed?ed.date:td(),hr=ed?ed.hour:nt(),q=ed?ed.quantity:"",g=ed?ed.gasMeter:S.lastGas;
+var rpm=ed?ed.granRpm:S.lastRpm,wfl=ed?ed.waterFlow:S.lastWater,weir=ed?ed.weirHeight:S.lastWeir,feed=ed?ed.feedRpm:S.lastFeedRpm;
 let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</h2><div class="fg"><div class="f df"><label>Data'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="date" id="fd" value="'+dt+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Valanda'+(ed?"":" <span class=\"at\">auto</span>")+'</label><input type="time" id="fh" value="'+hr+'"'+(ed?"":" class=\"af\"")+'></div><div class="f"><label>Darbuotojas'+(w&&!ed?' <span class="at">auto</span>':"")+'</label><input type="text" id="fw" value="'+(w||"")+'" placeholder="Vardas"'+(w&&!ed?' class="af"':"")+'></div></div>';
 
 // Silo calculator
@@ -352,11 +352,12 @@ h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display
 h+='</div>';
 h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
 
-h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'" oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
+h+='<div class="slbl sg"><span class="si">\uD83D\uDD25</span> Dujos</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis'+(g&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'"'+(g&&!ed?' class="af"':"")+' oninput="ugd()"></div><div class="calc" id="gdb" style="display:none"><span class="cl">Skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
 h+='<div class="slbl se"><span class="si">\u26A1</span> Elektra</div><div class="fg mg">'+EL.map(m=>'<div class="f"><label>'+m+'</label><input type="number" inputmode="decimal" step="any" id="fe'+m+'" value="'+(ed?ed["el"+m]:"")+'"></div>').join("")+"</div>";
-h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div></div>';
+h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>D\u017Eiovykl\u0117s \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+'></div><div class="f"><label>Lauko dr\u0117gnumas, %'+(oH!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="foh" value="'+oH+'"'+(oH!==""&&!ed?' class="af"':"")+'></div></div>';
 h+='<div class="slbl" style="color:#06b6d4;background:rgba(6,182,212,.08)"><span class="si">\u2699\uFE0F</span> Granuliatorius</div><div class="fg">';
 h+='<div class="f"><label>Apsukos'+(rpm&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="frpm" value="'+(rpm||"")+'"'+(rpm&&!ed?' class="af"':"")+'></div>';
+h+='<div class="f"><label>Padavimo apsukos, %'+(feed&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ffeed" value="'+(feed||"")+'"'+(feed&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f"><label>Vandens kiekis'+(wfl&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fwfl" value="'+(wfl||"")+'"'+(wfl&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f"><label>U\u017Etvaros auk\u0161tis, cm'+(weir&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fweir" value="'+(weir||"")+'"'+(weir&&!ed?' class="af"':"")+'></div>';
 h+='</div>';
@@ -383,7 +384,7 @@ function calcSilo(){
   }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
-async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
+async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,el480:$("#fe480").value,el380:$("#fe380").value,el183:$("#fe183").value,el184:$("#fe184").value,el182:$("#fe182").value,el181:$("#fe181").value,dryerTemp:$("#fdr").value,outdoorTemp:$("#fo").value,outdoorHumidity:$("#foh").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value,feedRpm:$("#ffeed").value,siloAfter:s2v};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.feedRpm){S.lastFeedRpm=d.feedRpm;localStorage.setItem("kv_feedrpm",d.feedRpm)}if(d.gasMeter){S.lastGas=d.gasMeter;localStorage.setItem("kv_gas",d.gasMeter)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
 function shiftRange(type,off){
@@ -513,13 +514,13 @@ function rTable(){
     h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(elTotal(e))+'</span>';
     if(ed!==null&&qty>0){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
     h+='</td>';
-    h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span></td>';
-    h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.72rem;line-height:1.5;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.6rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.6rem">H\u2082O</span><br>'+(e.weirHeight||"\u2014")+' <span style="font-size:.6rem">cm</span></td>';
+    h+='<td style="text-align:right;vertical-align:top"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span><span class="td-out" style="display:block">'+(e.outdoorHumidity||"\u2014")+'%</span></td>';
+    h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.72rem;line-height:1.5;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.6rem">rpm</span><br>'+(e.feedRpm||"\u2014")+' <span style="font-size:.6rem">pad.%</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.6rem">H\u2082O</span><br>'+(e.weirHeight||"\u2014")+' <span style="font-size:.6rem">cm</span></td>';
     h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / H\u2082O / cm</span></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Gran: rpm / pad.% / H\u2082O / cm</span></div>';
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
@@ -604,6 +605,230 @@ function drawCharts(){
   charts.scatter=new Chart($("#chScatter"),{type:"scatter",data:{datasets:[{label:"Dujos/t",data:scatter,backgroundColor:"rgba(245,158,11,.7)",pointRadius:6,pointHoverRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw.label+": "+c.raw.x+"\u00B0C, "+c.raw.y+" dujos/t"}}}},scales:{x:{...yAxis,title:{display:true,text:"Vid. lauko \u00B0C",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...yAxis,title:{display:true,text:"Dujos / t",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
 }
 
+// ── Parametrų analizė ──
+function dayAgg(fi,allEntries){
+  const imap=new Map();allEntries.forEach((e,i)=>imap.set(e,i));
+  const days={};
+  fi.forEach(e=>{
+    if(!days[e.date])days[e.date]={qty:0,mins:0,rpm:null,feed:null,water:null,weir:null,outT:[],humT:[]};
+    const day=days[e.date];
+    const i=imap.get(e),prev=i>0?allEntries[i-1]:null;
+    day.qty+=parseFloat(e.quantity)||0;
+    if(prev&&prev.date===e.date&&e.hour&&prev.hour){
+      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
+      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)day.mins+=m}
+    }
+    if(e.granRpm!==""&&e.granRpm!=null)day.rpm=e.granRpm;
+    if(e.feedRpm!==""&&e.feedRpm!=null)day.feed=e.feedRpm;
+    if(e.waterFlow!==""&&e.waterFlow!=null)day.water=e.waterFlow;
+    if(e.weirHeight!==""&&e.weirHeight!=null)day.weir=e.weirHeight;
+    const ot=parseFloat(e.outdoorTemp);if(!isNaN(ot))day.outT.push(ot);
+    const oh=parseFloat(e.outdoorHumidity);if(!isNaN(oh))day.humT.push(oh);
+  });
+  Object.keys(days).forEach(d=>{const day=days[d];day.tph=day.mins>0?day.qty/(day.mins/60):null;day.avgOut=day.outT.length?day.outT.reduce((a,b)=>a+b,0)/day.outT.length:null;day.avgHum=day.humT.length?day.humT.reduce((a,b)=>a+b,0)/day.humT.length:null});
+  return days;
+}
+function paramChanged(a,b){if(!a)return false;const f=["rpm","feed","water","weir"];return f.some(k=>{const av=a[k],bv=b[k];if(av===null||bv===null)return false;return String(av)!==String(bv)});}
+// Vieninga serija analizei: valandinė, kai išrinkta viena diena (day/today), kitaip — dienomis
+function getAnalysisSeries(fi){
+  const hourly=(S.fl==="day"||S.fl==="today");
+  if(hourly){
+    const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
+    const series=fi.map(e=>{
+      const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
+      const qty=parseFloat(e.quantity)||0;
+      let tph=null;
+      if(prev&&prev.date===e.date&&e.hour&&prev.hour){
+        var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
+        if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)tph=qty/(m/60)}
+      }
+      return{label:e.hour||"\u2014",rpm:e.granRpm,feed:e.feedRpm,water:e.waterFlow,weir:e.weirHeight,outT:e.outdoorTemp,outHum:e.outdoorHumidity,tph};
+    });
+    return{series,hourly:true};
+  }
+  const days=dayAgg(fi,S.entries);
+  const dayKeys=Object.keys(days).sort();
+  const series=dayKeys.map(d=>({label:d,rpm:days[d].rpm,feed:days[d].feed,water:days[d].water,weir:days[d].weir,outT:days[d].avgOut,outHum:days[d].avgHum,tph:days[d].tph}));
+  return{series,hourly:false};
+}
+function cell(val,pv){
+  if(val===null||val==="")return'<td style="text-align:right;color:var(--text-muted)">\u2014</td>';
+  const changed=pv!==null&&pv!==""&&String(pv)!==String(val);
+  return'<td style="text-align:right'+(changed?';color:var(--diff);font-weight:700':"")+'">'+val+(changed?' <span style="font-size:.62rem;color:var(--text-muted)">(buvo '+pv+')</span>':"")+'</td>';
+}
+function tphColor(tph,minT,maxT){
+  if(tph===null||minT===null||maxT===null||minT===maxT)return null;
+  const t=(tph-minT)/(maxT-minT);
+  const c1=[244,114,182],c2=[59,130,246]; // rausva -> melyna
+  const r=Math.round(c1[0]+(c2[0]-c1[0])*t),g=Math.round(c1[1]+(c2[1]-c1[1])*t),b=Math.round(c1[2]+(c2[2]-c1[2])*t);
+  return"rgb("+r+","+g+","+b+")";
+}
+function rAnalysis(){
+  const fi=filt(S.entries);
+  let h=rFilterBar();
+  if(fi.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDD0E</div><p>Reikia bent 2 \u012Fra\u0161\u0173 analizei</p></div>';
+  const{series,hourly}=getAnalysisSeries(fi);
+  if(series.length<2)return h+'<div class="es"><div class="icon">\uD83D\uDD0E</div><p>Reikia bent 2 \u012Fra\u0161\u0173 analizei</p></div>';
+  const withPrev=series.map((p,i)=>({...p,prev:i>0?series[i-1]:null}));
+  const tphVals=series.map(p=>p.tph).filter(v=>v!==null);
+  const minT=tphVals.length?Math.min(...tphVals):null,maxT=tphVals.length?Math.max(...tphVals):null;
+  const sorted=withPrev.slice().sort((a,b)=>{if(a.tph===null)return 1;if(b.tph===null)return-1;return b.tph-a.tph});
+  h+='<div class="card"><h2>\uD83D\uDD0E Parametr\u0173 \u012Ftaka na\u0161umui'+(hourly?' \u2014 valandomis':' \u2014 dienomis')+'</h2><div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px">Paryk\u0161kinta reik\u0161m\u0117 = pakeista lyginant su ankstesne '+(hourly?"valanda":"diena")+' (chronologi\u0161kai)</div>';
+  h+='<div style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px">Rikiuota pagal na\u0161um\u0105 (didesnis \u2192 ma\u017eesnis). Spalva: <span style="color:#3b82f6;font-weight:700">m\u0117lyna</span> = didziausias na\u0161umas, <span style="color:#f472b6;font-weight:700">rausva</span> = ma\u017eiausias</div>';
+  h+='<div class="ts"><table><thead><tr><th class="sc">'+(hourly?"Valanda":"Data")+'</th><th style="text-align:right">Gran. aps.</th><th style="text-align:right">Pad. %</th><th style="text-align:right">Vanduo</th><th style="text-align:right">Sklend\u0117 cm</th><th style="text-align:right">Lauko \u00B0C</th><th style="text-align:right">Dr\u0117gnumas %</th><th style="text-align:right">t / val.</th></tr></thead><tbody>';
+  sorted.forEach(p=>{
+    const prev=p.prev;
+    h+='<tr><td class="sc">'+p.label+'</td>';
+    h+=cell(p.rpm,prev?prev.rpm:null);
+    h+=cell(p.feed,prev?prev.feed:null);
+    h+=cell(p.water,prev?prev.water:null);
+    h+=cell(p.weir,prev?prev.weir:null);
+    h+='<td style="text-align:right;color:var(--text-muted)">'+(p.outT!==null&&p.outT!==""&&p.outT!==undefined&&!isNaN(parseFloat(p.outT))?parseFloat(p.outT).toFixed(1)+"\u00B0":"\u2014")+'</td>';
+    h+='<td style="text-align:right;color:var(--text-muted)">'+(p.outHum!==null&&p.outHum!==""&&p.outHum!==undefined&&!isNaN(parseFloat(p.outHum))?parseFloat(p.outHum).toFixed(0)+"%":"\u2014")+'</td>';
+    const col=tphColor(p.tph,minT,maxT);
+    h+='<td style="text-align:right;font-weight:700;'+(col?"background:"+col+";color:#fff;border-radius:4px":"color:var(--accent)")+'">'+(p.tph!==null?p.tph.toFixed(1):"\u2014")+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDCC8 Na\u0161umas (t/val.) '+(hourly?"per valand\u0105":"per dien\u0105")+' \u2014 pa\u017eym\u0117ta, kai kei\u010diamas parametras</h3><canvas id="chTphDay"></canvas></div>';
+  h+='<div class="chart-grid" style="margin-top:16px">';
+  h+='<div class="chart-card"><h3>\u2699\uFE0F Granuliatoriaus greitis vs Na\u0161umas</h3><canvas id="chParamRpm"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDD22 Padavimo apsukos vs Na\u0161umas</h3><canvas id="chParamFeed"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDCA7 Vandens kiekis vs Na\u0161umas</h3><canvas id="chParamWater"></canvas></div>';
+  h+='<div class="chart-card"><h3>\uD83D\uDEA7 Sklend\u0117s auk\u0161tis vs Na\u0161umas</h3><canvas id="chParamWeir"></canvas></div>';
+  h+='</div>';
+  return h;
+}
+function drawAnalysisChart(){
+  if(S.view!=="analysis")return;
+  const fi=filt(S.entries);if(fi.length<2)return;
+  const{series,hourly}=getAnalysisSeries(fi);
+  if(series.length<2)return;
+  const labels=series.map(p=>hourly?p.label:(function(){var pp=p.label.split("-");return pp[1]+"-"+pp[2]})());
+  const tphData=series.map(p=>p.tph);
+  const changed=series.map((p,i)=>i>0&&paramChanged(series[i-1],p));
+  const pointColors=changed.map(c=>c?"#a78bfa":"#3b82f6");
+  const pointRadii=changed.map(c=>c?7:3);
+  Object.values(charts).forEach(c=>c.destroy());charts={};
+  const xAxis={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10},maxRotation:45,minRotation:45}};
+  const yAxis={grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"#8b8fa7",font:{family:"DM Sans",size:10}}};
+  charts.tphDay=new Chart($("#chTphDay"),{type:"line",data:{labels,datasets:[{label:"t/val.",data:tphData,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.08)",fill:true,tension:.25,pointRadius:pointRadii,pointBackgroundColor:pointColors,spanGaps:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){var i=c.dataIndex,p=series[i];var s="t/val.: "+(p.tph!==null?p.tph.toFixed(1):"\u2014");if(changed[i])s+=" \u2014 parametras pakeistas";return s}}}},scales:{x:xAxis,y:yAxis}}});
+  function scatterFor(key,canvasId,color){
+    const pts=series.filter(p=>p[key]!==null&&p[key]!==""&&p.tph!==null).map(p=>({x:parseFloat(p[key]),y:+p.tph.toFixed(2),label:p.label}));
+    const el=$("#"+canvasId);if(!el)return;
+    if(pts.length<2){el.parentElement.innerHTML='<h3>'+el.parentElement.querySelector("h3").innerHTML+'</h3><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.8rem">Nepakanka duomen\u0173 (reikia \u2265 2 skirtingu reik\u0161miu ta\u0161k\u0173)</div>';return}
+    charts[canvasId]=new Chart(el,{type:"scatter",data:{datasets:[{label:"t/val.",data:pts,backgroundColor:color,pointRadius:6,pointHoverRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw.label+": "+c.raw.x+" \u2192 "+c.raw.y+" t/val."}}}},scales:{x:{...yAxis,title:{display:true,text:"Reik\u0161m\u0117",color:"#8b8fa7",font:{family:"DM Sans",size:11}}},y:{...yAxis,title:{display:true,text:"t / val.",color:"#8b8fa7",font:{family:"DM Sans",size:11}}}}}});
+  }
+  scatterFor("rpm","chParamRpm","rgba(6,182,212,.75)");
+  scatterFor("feed","chParamFeed","rgba(16,185,129,.75)");
+  scatterFor("water","chParamWater","rgba(59,130,246,.75)");
+  scatterFor("weir","chParamWeir","rgba(245,158,11,.75)");
+}
+
+// ── Patikra prieš keičiant ──
+// Suskaido visą istoriją į laikotarpius, kai visi 4 parametrai buvo nekeičiami
+function buildPeriods(entries){
+  const periods=[];
+  let cur=null;
+  entries.forEach((e,i)=>{
+    const prev=i>0?entries[i-1]:null;
+    const qty=parseFloat(e.quantity)||0;
+    let mins=0;
+    if(prev&&e.hour&&prev.hour){
+      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
+      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)mins=m}
+    }
+    const key=e.granRpm+"|"+e.feedRpm+"|"+e.waterFlow+"|"+e.weirHeight;
+    if(!cur||cur.key!==key){
+      if(cur)periods.push(cur);
+      cur={key,rpm:e.granRpm,feed:e.feedRpm,water:e.waterFlow,weir:e.weirHeight,startDate:e.date,startHour:e.hour,endDate:e.date,endHour:e.hour,qty:0,mins:0,n:0};
+    }
+    cur.qty+=qty;cur.mins+=mins;cur.n++;cur.endDate=e.date;cur.endHour=e.hour;
+  });
+  if(cur)periods.push(cur);
+  periods.forEach(p=>{p.tph=p.mins>0?p.qty/(p.mins/60):null});
+  return periods.filter(p=>p.rpm!==""&&p.rpm!=null);
+}
+function periodLabel(p){return p.startDate===p.endDate?(p.startDate+" "+p.startHour+"\u2013"+p.endHour):(p.startDate+" "+p.startHour+" \u2192 "+p.endDate+" "+p.endHour)}
+function paramDist(period,target,tol){
+  const fields=["rpm","feed","water","weir"];
+  let match=true;const diffs={};
+  fields.forEach(k=>{
+    if(target[k]===null)return;
+    const pv=period[k];
+    if(pv===""||pv===null||pv===undefined){match=false;return}
+    const d=Math.abs(parseFloat(pv)-parseFloat(target[k]));
+    diffs[k]=d;
+    if(d>tol[k])match=false;
+  });
+  return{match,diffs};
+}
+function rCheck(){
+  const rpm=S.lastRpm,feed=S.lastFeedRpm,water=S.lastWater,weir=S.lastWeir;
+  let h='<div class="card"><h2>\u2705 Patikrinti derin\u012F prie\u0161 kei\u010Diant</h2>';
+  h+='<div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">Lauk\u0117liai u\u017epildyti dabartin\u0117mis (paskutin\u0117mis \u012Fvestomis) reik\u0161m\u0117mis \u2014 pakeisk t\u0105, kur\u012F ketini keisti, ir spausk Tikrinti. Lauk\u0105 gali i\u0161trinti, jei jis nesvarbus paie\u0161kai.</div>';
+  h+='<div class="fg">';
+  h+='<div class="f"><label>Gran. apsukos'+(rpm?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ckRpm" value="'+(rpm||"")+'"'+(rpm?' class="af"':"")+' placeholder="pvz. 70"></div>';
+  h+='<div class="f"><label>Padavimo %'+(feed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ckFeed" value="'+(feed||"")+'"'+(feed?' class="af"':"")+' placeholder="pvz. 45"></div>';
+  h+='<div class="f"><label>Vandens kiekis'+(water?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ckWater" value="'+(water||"")+'"'+(water?' class="af"':"")+' placeholder="pvz. 10"></div>';
+  h+='<div class="f"><label>Sklend\u0117s auk\u0161tis, cm'+(weir?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ckWeir" value="'+(weir||"")+'"'+(weir?' class="af"':"")+' placeholder="pvz. 59"></div>';
+  h+='</div>';
+  h+='<div class="slbl" style="color:var(--text-muted);background:rgba(255,255,255,.04)"><span class="si">\uD83C\uDF9A\uFE0F</span> Leistina paklaida</div>';
+  h+='<div class="fg">';
+  h+='<div class="f"><label>Gran. apsukos \u00B1</label><input type="number" inputmode="decimal" step="any" id="ckTolRpm" value="1"></div>';
+  h+='<div class="f"><label>Padavimo % \u00B1</label><input type="number" inputmode="decimal" step="any" id="ckTolFeed" value="1"></div>';
+  h+='<div class="f"><label>Vandens \u00B1</label><input type="number" inputmode="decimal" step="any" id="ckTolWater" value="0.5"></div>';
+  h+='<div class="f"><label>Sklend\u0117s \u00B1</label><input type="number" inputmode="decimal" step="any" id="ckTolWeir" value="1"></div>';
+  h+='</div>';
+  h+='<button class="bsv" onclick="runCheck()">\uD83D\uDD0D Tikrinti</button>';
+  h+='<div id="ckResult" style="margin-top:16px"></div></div>';
+  return h;
+}
+function runCheck(){
+  const target={
+    rpm:$("#ckRpm").value!==""?parseFloat($("#ckRpm").value):null,
+    feed:$("#ckFeed").value!==""?parseFloat($("#ckFeed").value):null,
+    water:$("#ckWater").value!==""?parseFloat($("#ckWater").value):null,
+    weir:$("#ckWeir").value!==""?parseFloat($("#ckWeir").value):null
+  };
+  if(target.rpm===null&&target.feed===null&&target.water===null&&target.weir===null){
+    $("#ckResult").innerHTML='<div class="es"><p>\u012Eveski bent vien\u0105 parametr\u0105</p></div>';return;
+  }
+  const tol={
+    rpm:parseFloat($("#ckTolRpm").value)||0,
+    feed:parseFloat($("#ckTolFeed").value)||0,
+    water:parseFloat($("#ckTolWater").value)||0,
+    weir:parseFloat($("#ckTolWeir").value)||0
+  };
+  const periods=buildPeriods(S.entries);
+  const scored=periods.map(p=>{const{match,diffs}=paramDist(p,target,tol);const totalDiff=Object.values(diffs).reduce((a,b)=>a+b,0);return{p,match,diffs,totalDiff}});
+  const matches=scored.filter(s=>s.match).sort((a,b)=>(b.p.tph||0)-(a.p.tph||0));
+  let h='';
+  if(matches.length>0){
+    h+='<div style="color:var(--ok);font-weight:700;margin-bottom:10px">\u26A0\uFE0F Toks derinys (ar labai pana\u0161us) jau buvo bandytas \u2014 rezultatai \u017eemiau (rikiuota pagal na\u0161um\u0105):</div>';
+    h+='<div class="ts"><table><thead><tr><th class="sc">Laikotarpis</th><th style="text-align:right">Gran.</th><th style="text-align:right">Pad.%</th><th style="text-align:right">Vanduo</th><th style="text-align:right">Sklend\u0117</th><th style="text-align:right">t/val.</th></tr></thead><tbody>';
+    matches.forEach(s=>{const p=s.p;h+='<tr><td class="sc">'+periodLabel(p)+'</td><td style="text-align:right">'+(p.rpm||"\u2014")+'</td><td style="text-align:right">'+(p.feed||"\u2014")+'</td><td style="text-align:right">'+(p.water||"\u2014")+'</td><td style="text-align:right">'+(p.weir||"\u2014")+'</td><td style="text-align:right;font-weight:700;color:var(--accent)">'+(p.tph!==null?p.tph.toFixed(1):"\u2014")+'</td></tr>'});
+    h+='</tbody></table></div>';
+  }else{
+    h+='<div style="color:var(--diff);font-weight:700;margin-bottom:10px">\uD83C\uDD95 Toks derinys (pagal nurodyt\u0105 paklaid\u0105) dar nebandytas.</div>';
+    const withDist=scored.filter(s=>Object.keys(s.diffs).length>0&&Object.values(s.diffs).every(v=>v!==undefined)).sort((a,b)=>a.totalDiff-b.totalDiff);
+    if(withDist.length>0){
+      const p=withDist[0].p;
+      h+='<div style="font-size:.8rem;color:var(--text-muted)">Art\u012Fmiausias rastas derinys: '+periodLabel(p)+' \u2014 Gran. '+(p.rpm||"\u2014")+', Pad. '+(p.feed||"\u2014")+'%, Vanduo '+(p.water||"\u2014")+', Sklend\u0117 '+(p.weir||"\u2014")+' cm \u2192 '+(p.tph!==null?p.tph.toFixed(1):"\u2014")+' t/val.</div>';
+    }
+  }
+  h+='<button class="bsv" style="margin-top:14px;background:var(--ok)" onclick="applyCheckValues()">\u2705 OK \u2014 perkelti \u0161ias reik\u0161mes \u012F \u012Fvedimo form\u0105</button>';
+  $("#ckResult").innerHTML=h;
+}
+function applyCheckValues(){
+  S.lastRpm=$("#ckRpm").value;
+  S.lastFeedRpm=$("#ckFeed").value;
+  S.lastWater=$("#ckWater").value;
+  S.lastWeir=$("#ckWeir").value;
+  S.editEntry=null;
+  S.view="form";
+  R();
+}
+
 // ── PDF ──
 function genPDF(){
   const fi=filt(S.entries);if(!fi.length){toast("N\u0117ra duomen\u0173","fail");return}
@@ -685,13 +910,18 @@ function R(){
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
+  h+='<button class="'+(S.view==="analysis"?"active":"")+'" onclick="S.view=\'analysis\';R()">\uD83D\uDD0E Analiz\u0117</button>';
+  h+='<button class="'+(S.view==="check"?"active":"")+'" onclick="S.view=\'check\';R()">\u2705 Patikra</button>';
   h+='<button class="'+(S.view==="settings"?"active":"")+'" onclick="S.view=\'settings\';R()">\u2699\uFE0F Nust.</button></div>';
   if(S.view==="form")h+=rForm();
   if(S.view==="table")h+=rTable();
   if(S.view==="charts")h+=rCharts();
+  if(S.view==="analysis")h+=rAnalysis();
+  if(S.view==="check")h+=rCheck();
   if(S.view==="settings")h+=rCfg();
   a.innerHTML=h+"</div>";
   if(S.view==="charts")setTimeout(drawCharts,50);
+  if(S.view==="analysis")setTimeout(drawAnalysisChart,50);
 }
 
 R();if(S.url)load();getWeather().then(()=>{if(S.view==="form")R()});
