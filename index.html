@@ -363,7 +363,7 @@ h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><spa
 h+='<div class="fg">';
 var sp=ed?"":S.lastSilo,unl=ed?ed.unloadMeter:S.lastUnload;
 h+='<div class="f"><label>Silosas prie\u0161 %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs1" value="'+sp+'" placeholder="pvz. 0" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+ro+'></div>';
-h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 43" oninput="calcSilo()"></div>';
+h+='<div class="f"><label>Silosas po %'+(sp&&!ed?' <span class="at">auto</span>':"")+' <span style="font-size:.6rem;color:var(--text-muted);text-transform:none;font-weight:400">(patikrink/atnaujink)</span></label><input type="number" inputmode="decimal" step="any" id="fs2" value="'+(ed?ed.siloAfter||"":sp)+'" placeholder="pvz. 43" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"'+ro+'></div>';
 h+='</div>';
 h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
