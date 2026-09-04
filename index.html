@@ -364,7 +364,7 @@ h+='<div class="fg">';
 var sp=ed?"":S.lastSilo,unl=ed?ed.unloadMeter:S.lastUnload;
 h+='<div class="f"><label>Silosas prie\u0161 %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs1" value="'+sp+'" placeholder="pvz. 0" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+ro+'></div>';
 h+='<div class="f"><label>Silosas po %</label><input type="number" inputmode="decimal" step="any" id="fs2" placeholder="pvz. 43" oninput="calcSilo()"></div>';
-h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"></div>';
+h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"'+ro+'></div>';
 h+='</div>';
 h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
 
@@ -384,9 +384,11 @@ function calcSilo(){
   var s1=$("#fs1"),s2=$("#fs2"),fl=$("#funload"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
   if(!s1||!s2||!fq)return;
   var b=parseFloat(s1.value),a=parseFloat(s2.value);
-  var prevUnload=parseFloat(S.lastUnload),curUnload=parseFloat(fl?fl.value:"");
+  var prevUnload=parseFloat(S.lastUnload);
+  if(isNaN(prevUnload))prevUnload=0;
+  var curUnload=parseFloat(fl?fl.value:"");
   var unloaded=0;
-  if(!isNaN(curUnload)&&!isNaN(prevUnload)){unloaded=curUnload-prevUnload;if(unloaded<0)unloaded=0}
+  if(!isNaN(curUnload)){unloaded=curUnload-prevUnload;if(unloaded<0)unloaded=0}
   if(isNaN(b)||isNaN(a)){box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";return}
   var d=(siloTons(a)-siloTons(b))+unloaded;
   if(d>=0){
