@@ -256,7 +256,25 @@ function timeDelta(e1,e2){
   return h>0?(h+"h "+pd(m)+"m"):(m+"m");
 }
 function elReading(e){if(e.elektra!==""&&e.elektra!=null)return parseFloat(e.elektra);var t=0,has=false;EL.forEach(function(m){var v=parseFloat(e["el"+m]);if(!isNaN(v)){t+=v;has=true}});return has?t:0}
-function elReadingDelta(e,prev){if(!prev)return null;if(e.elektra!==""&&e.elektra!=null&&prev.elektra!==""&&prev.elektra!=null){return df(e.elektra,prev.elektra)}var t=0,has=false;EL.forEach(function(m){var d=df(e["el"+m],prev["el"+m]);if(d!==null){t+=d;has=true}});return has?t:null}
+function gasReadingDelta(e,prev,next){
+  let d=(prev&&prev.date===e.date)?df(e.gasMeter,prev.gasMeter):0;
+  if(next&&next.date!==e.date){const carry=df(next.gasMeter,e.gasMeter);if(carry!==null)d=(d===null?0:d)+carry}
+  return d;
+}
+function elReadingDelta(e,prev,next){
+  let d;
+  if(prev&&prev.date===e.date){
+    if(e.elektra!==""&&e.elektra!=null&&prev.elektra!==""&&prev.elektra!=null){d=df(e.elektra,prev.elektra)}
+    else{var t=0,has=false;EL.forEach(function(m){var v=df(e["el"+m],prev["el"+m]);if(v!==null){t+=v;has=true}});d=has?t:null}
+  }else d=0;
+  if(next&&next.date!==e.date){
+    let carry=null;
+    if(e.elektra!==""&&e.elektra!=null&&next.elektra!==""&&next.elektra!=null){carry=df(next.elektra,e.elektra)}
+    else{var t2=0,has2=false;EL.forEach(function(m){var v=df(next["el"+m],e["el"+m]);if(v!==null){t2+=v;has2=true}});carry=has2?t2:null}
+    if(carry!==null)d=(d===null?0:d)+carry;
+  }
+  return d;
+}
 function cp(text,btn){try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;left:-9999px";document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);btn.textContent="\u2713 Nukopijuota!";btn.classList.add("ok");setTimeout(()=>{btn.textContent="\uD83D\uDCCB Kopijuoti";btn.classList.remove("ok")},2000)}catch(e){window.prompt("Ctrl+C:",text)}}
 function toast(m,t){const e=document.createElement("div");e.className="toast "+(t||"ok");e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 
@@ -277,11 +295,11 @@ function calcSummary(fi){
   const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
   const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
   let tG=0,tE=0,gC=0,eC=0;
-  fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;const qty=parseFloat(e.quantity)||0;
+  fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;const qty=parseFloat(e.quantity)||0;
     const epG=(e.gasPrice!==""&&e.gasPrice!=null&&!isNaN(parseFloat(e.gasPrice)))?parseFloat(e.gasPrice):S.cfg.gp;
     const epE=(e.elPrice!==""&&e.elPrice!=null&&!isNaN(parseFloat(e.elPrice)))?parseFloat(e.elPrice):S.cfg.ep;
-    if(prev&&qty>0){const g=df(e.gasMeter,prev.gasMeter);if(g!==null){tG+=g;gC+=g*epG}
-      const ed=elReadingDelta(e,prev);if(ed!==null){tE+=ed;eC+=ed*epE}}});
+    if(prev&&qty>0){const g=gasReadingDelta(e,prev,next);if(g!==null){tG+=g;gC+=g*epG}
+      const ed=elReadingDelta(e,prev,next);if(ed!==null){tE+=ed;eC+=ed*epE}}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
   let sumDry=0,cntDry=0,sumOut=0,cntOut=0,sumSup=0,cntSup=0,sumExh=0,cntExh=0;
@@ -407,7 +425,7 @@ function calcSilo(){
     fq.value="";fq.classList.remove("af");if(tag)tag.style.display="none";
   }
 }
-function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;if(!last)return;const d=df(gi.value,last.gasMeter),b=$("#gdb");if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
+function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;const b=$("#gdb");const curDate=$("#fd")?$("#fd").value:null;if(!last||!curDate){if(b)b.style.display="none";return}if(last.date!==curDate){b.style.display="flex";$("#gdv").textContent=fm(0);return}const d=df(gi.value,last.gasMeter);if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
 async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,elektra:$("#fel").value,dryerTemp:$("#fdr").value,dryerSupplyTemp:$("#fdrsup").value,dryerExhaustTemp:$("#fdrexh").value,outdoorTemp:$("#fo").value,outdoorHumidity:$("#foh").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value,feedRpm:$("#ffeed").value,binderDose:$("#fbind").value,unloadMeter:$("#funload").value,siloAfter:s2v};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.feedRpm){S.lastFeedRpm=d.feedRpm;localStorage.setItem("kv_feedrpm",d.feedRpm)}if(d.binderDose){S.lastBinder=d.binderDose;localStorage.setItem("kv_binder",d.binderDose)}if(d.unloadMeter){S.lastUnload=d.unloadMeter;localStorage.setItem("kv_unload",d.unloadMeter)}if(d.elektra){S.lastElektra=d.elektra;localStorage.setItem("kv_elektra",d.elektra)}if(d.dryerSupplyTemp){S.lastDrySupply=d.dryerSupplyTemp;localStorage.setItem("kv_drysup",d.dryerSupplyTemp)}if(d.dryerExhaustTemp){S.lastDryExhaust=d.dryerExhaustTemp;localStorage.setItem("kv_dryexh",d.dryerExhaustTemp)}if(d.gasMeter){S.lastGas=d.gasMeter;localStorage.setItem("kv_gas",d.gasMeter)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
@@ -524,9 +542,9 @@ function rTable(){
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
   h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th style="text-align:right">Gran.</th><th class="ac"></th></tr></thead><tbody>';
   fi.forEach(e=>{
-    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
-    const gd=prev?df(e.gasMeter,prev.gasMeter):null;
-    const ed=elReadingDelta(e,prev);
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;
+    const gd=gasReadingDelta(e,prev,next);
+    const ed=elReadingDelta(e,prev,next);
     const td2=prev?timeDelta(prev,e):"";
     const qty=parseFloat(e.quantity)||0;
     const gpt=(gd!==null&&qty>0)?Math.round(gd/qty):null;
@@ -581,12 +599,12 @@ function drawCharts(){
   // Aggregate by day
   const days={};
   fi.forEach(e=>{
-    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;
     const qty0=parseFloat(e.quantity)||0;
     const epG=(e.gasPrice!==""&&e.gasPrice!=null&&!isNaN(parseFloat(e.gasPrice)))?parseFloat(e.gasPrice):S.cfg.gp;
     const epE=(e.elPrice!==""&&e.elPrice!=null&&!isNaN(parseFloat(e.elPrice)))?parseFloat(e.elPrice):S.cfg.ep;
-    const gd=(prev&&qty0>0)?df(e.gasMeter,prev.gasMeter):0;
-    let ed=0;if(prev&&qty0>0){const delta=elReadingDelta(e,prev);if(delta)ed+=delta}
+    const gd=qty0>0?(gasReadingDelta(e,prev,next)||0):0;
+    let ed=0;if(qty0>0){const delta=elReadingDelta(e,prev,next);if(delta)ed+=delta}
     if(!days[e.date])days[e.date]={qty:0,gas:0,el:0,gasCost:0,elCost:0,temps:[],n:0};
     const day=days[e.date];
     day.qty+=parseFloat(e.quantity)||0;
@@ -920,8 +938,8 @@ function genPDF(){
 
   const tHead=[["Data","Val.","Darb.","Kiekis","Duju sk.","D.\u0394","Elektra","Prod.\u00B0C","Tiek.\u00B0C","I\u0161.\u00B0C","L.\u00B0C"]];
   const tBody=fi.map(e=>{
-    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
-    const gd=prev?df(e.gasMeter,prev.gasMeter):null;
+    const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;
+    const gd=gasReadingDelta(e,prev,next);
     return[e.date,e.hour||"",e.worker||"",e.quantity||"",e.gasMeter||"",gd!==null?gd:"",
       elReading(e)||"",e.dryerTemp||"",e.dryerSupplyTemp||"",e.dryerExhaustTemp||"",e.outdoorTemp||""];
   });
