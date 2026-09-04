@@ -636,6 +636,7 @@ function drawCharts(){
 }
 
 // ── Parametrų analizė ──
+const MIN_RUNNING_RPM=1; // po sio slenkscio - laikoma, kad irenginys stovi (inercija/dulkiu nusedimas, ne realus derinys)
 function dayAgg(fi,allEntries){
   const imap=new Map();allEntries.forEach((e,i)=>imap.set(e,i));
   const days={};
@@ -648,11 +649,15 @@ function dayAgg(fi,allEntries){
       var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
       if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)day.mins+=m}
     }
-    if(e.granRpm!==""&&e.granRpm!=null)day.rpm=e.granRpm;
-    if(e.feedRpm!==""&&e.feedRpm!=null)day.feed=e.feedRpm;
-    if(e.waterFlow!==""&&e.waterFlow!=null)day.water=e.waterFlow;
-    if(e.weirHeight!==""&&e.weirHeight!=null)day.weir=e.weirHeight;
-    if(e.binderDose!==""&&e.binderDose!=null)day.binder=e.binderDose;
+    const rpmVal=parseFloat(e.granRpm);
+    const isIdle=!isNaN(rpmVal)&&rpmVal<MIN_RUNNING_RPM;
+    if(!isIdle){
+      if(e.granRpm!==""&&e.granRpm!=null)day.rpm=e.granRpm;
+      if(e.feedRpm!==""&&e.feedRpm!=null)day.feed=e.feedRpm;
+      if(e.waterFlow!==""&&e.waterFlow!=null)day.water=e.waterFlow;
+      if(e.weirHeight!==""&&e.weirHeight!=null)day.weir=e.weirHeight;
+      if(e.binderDose!==""&&e.binderDose!=null)day.binder=e.binderDose;
+    }
     const ot=parseFloat(e.outdoorTemp);if(!isNaN(ot))day.outT.push(ot);
     const oh=parseFloat(e.outdoorHumidity);if(!isNaN(oh))day.humT.push(oh);
   });
@@ -665,7 +670,13 @@ function getAnalysisSeries(fi){
   const hourly=(S.fl==="day"||S.fl==="today");
   if(hourly){
     const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
-    const series=fi.map(e=>{
+    // Praleidziam valandas, kai irenginys stovi (apsukos < riba) - tai inercijos/nusedimo
+    // kiekis, ne realaus parametru derinio rezultatas, tad ji neturi maisytis su koreliacija.
+    const activeEntries=fi.filter(e=>{
+      const rpmVal=parseFloat(e.granRpm);
+      return !(!isNaN(rpmVal)&&rpmVal<MIN_RUNNING_RPM);
+    });
+    const series=activeEntries.map(e=>{
       const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
       const qty=parseFloat(e.quantity)||0;
       let tph=null;
