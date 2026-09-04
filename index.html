@@ -276,10 +276,12 @@ function filtCmp(){var r=shiftRange(S.fl,S.cmpOff);if(!r.a&&!r.b)return S.entrie
 function calcSummary(fi){
   const imap=new Map();S.entries.forEach((e,i)=>imap.set(e,i));
   const tQ=fi.reduce((s,e)=>s+(parseFloat(e.quantity)||0),0);
-  let tG=0,tE=0;
+  let tG=0,tE=0,gC=0,eC=0;
   fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null;const qty=parseFloat(e.quantity)||0;
-    if(prev&&qty>0){const g=df(e.gasMeter,prev.gasMeter);if(g!==null)tG+=g;
-      const ed=elReadingDelta(e,prev);if(ed!==null)tE+=ed}});
+    const epG=(e.gasPrice!==""&&e.gasPrice!=null&&!isNaN(parseFloat(e.gasPrice)))?parseFloat(e.gasPrice):S.cfg.gp;
+    const epE=(e.elPrice!==""&&e.elPrice!=null&&!isNaN(parseFloat(e.elPrice)))?parseFloat(e.elPrice):S.cfg.ep;
+    if(prev&&qty>0){const g=df(e.gasMeter,prev.gasMeter);if(g!==null){tG+=g;gC+=g*epG}
+      const ed=elReadingDelta(e,prev);if(ed!==null){tE+=ed;eC+=ed*epE}}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
   let sumDry=0,cntDry=0,sumOut=0,cntOut=0,sumSup=0,cntSup=0,sumExh=0,cntExh=0;
@@ -290,7 +292,7 @@ function calcSummary(fi){
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
     if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
   const tph=totalMins>0?tQ/(totalMins/60):null;
-  return{tQ,tG,tE,gP,eP,gC:tG*gP,eC:tE*eP,tC:tG*gP+tE*eP,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,tph,totalMins};
+  return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,tph,totalMins};
 }
 
 async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp);e.unloadMeter=sNum(e.unloadMeter)});S.entries=d.entries;if(S.entries.length>0){S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastWeir=lastNonEmpty("weirHeight")||S.lastWeir;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastBinder=lastNonEmpty("binderDose")||S.lastBinder;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust;S.lastUnload=lastNonEmpty("unloadMeter")||S.lastUnload}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
@@ -579,13 +581,17 @@ function drawCharts(){
   fi.forEach(e=>{
     const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
     const qty0=parseFloat(e.quantity)||0;
+    const epG=(e.gasPrice!==""&&e.gasPrice!=null&&!isNaN(parseFloat(e.gasPrice)))?parseFloat(e.gasPrice):S.cfg.gp;
+    const epE=(e.elPrice!==""&&e.elPrice!=null&&!isNaN(parseFloat(e.elPrice)))?parseFloat(e.elPrice):S.cfg.ep;
     const gd=(prev&&qty0>0)?df(e.gasMeter,prev.gasMeter):0;
     let ed=0;if(prev&&qty0>0){const delta=elReadingDelta(e,prev);if(delta)ed+=delta}
-    if(!days[e.date])days[e.date]={qty:0,gas:0,el:0,temps:[],n:0};
+    if(!days[e.date])days[e.date]={qty:0,gas:0,el:0,gasCost:0,elCost:0,temps:[],n:0};
     const day=days[e.date];
     day.qty+=parseFloat(e.quantity)||0;
     day.gas+=gd||0;
     day.el+=ed;
+    day.gasCost+=(gd||0)*epG;
+    day.elCost+=ed*epE;
     const ot=parseFloat(e.outdoorTemp);if(!isNaN(ot))day.temps.push(ot);
     day.n++;
   });
@@ -596,7 +602,7 @@ function drawCharts(){
   const gasPerT=dayKeys.map(d=>days[d].qty>0?Math.round(days[d].gas/days[d].qty):null);
   const costPerT=dayKeys.map(d=>{
     if(days[d].qty<=0)return null;
-    return+(( days[d].gas*sm.gP + days[d].el*sm.eP ) / days[d].qty).toFixed(2);
+    return+((days[d].gasCost + days[d].elCost) / days[d].qty).toFixed(2);
   });
 
   // Scatter: gas per ton vs avg daily outdoor temp (aggregated by day)
