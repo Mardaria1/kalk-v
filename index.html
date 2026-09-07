@@ -313,7 +313,8 @@ function calcSummary(fi){
   return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,tph,totalMins};
 }
 
-async function load(){if(!S.url)return;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp);e.unloadMeter=sNum(e.unloadMeter)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastWeir=lastNonEmpty("weirHeight")||S.lastWeir;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastBinder=lastNonEmpty("binderDose")||S.lastBinder;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust;S.lastUnload=lastNonEmpty("unloadMeter")||S.lastUnload}R()}}catch(e){toast("Nepavyko gauti duomen\u0173","fail")}}
+async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp);e.unloadMeter=sNum(e.unloadMeter)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastWeir=lastNonEmpty("weirHeight")||S.lastWeir;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastBinder=lastNonEmpty("binderDose")||S.lastBinder;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust;S.lastUnload=lastNonEmpty("unloadMeter")||S.lastUnload}}return true}catch(e){return false}}
+async function load(){const ok=await fetchAndApply();if(ok)R();else toast("Nepavyko gauti duomen\u0173","fail")}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveNew(d){S.saving=true;R();d.gasPrice=S.cfg.gp;d.elPrice=S.cfg.ep;if(await post(d)){S.lastW=d.worker;S.lastD=d.dryerTemp;localStorage.setItem("kv_w",d.worker);localStorage.setItem("kv_d",d.dryerTemp);toast("\u2705 I\u0161saugota!");await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
 async function saveEdit(d){S.saving=true;R();d.action="edit";d.gasPrice=d.gasPrice||S.cfg.gp;d.elPrice=d.elPrice||S.cfg.ep;if(await post(d)){toast("\u2705 Atnaujinta!");S.editEntry=null;await load()}else toast("\u274C Klaida","fail");S.saving=false;R()}
@@ -372,11 +373,21 @@ let h='<div class="card"><h2>'+(ed?"\u270F\uFE0F Redaguoti":"\u2795 Naujas")+'</
 h+='<button class="bsv'+(ed?" em":"")+'" style="margin-top:12px" onclick="hSave()" '+(S.saving?"disabled":"")+'>'+(S.saving?"\u23F3...":(ed?"\uD83D\uDCBE Atnaujinti":"\uD83D\uDCBE I\u0161saugoti"))+"</button>";
 if(ed)h+='<button class="bcan" onclick="S.editEntry=null;R()">At\u0161aukti</button>';
 
-var unl=ed?ed.unloadMeter:S.lastUnload;
+var unlDirect="";
+if(ed){
+  var uIdx=S.entries.indexOf(ed);
+  var uPrev=uIdx>0?S.entries[uIdx-1]:null;
+  if(uPrev&&uPrev.date===ed.date){
+    var uD=(parseFloat(ed.unloadMeter)||0)-(parseFloat(uPrev.unloadMeter)||0);
+    unlDirect=uD>0?uD:"";
+  }else{
+    unlDirect=ed.unloadMeter||"";
+  }
+}
 h+='<div class="slbl" style="color:#f59e0b;background:rgba(245,158,11,.08)"><span class="si">\u270B</span> Rankinis \u012fvedimas</div><div class="fg">';
 h+='<div class="f fbig"><label>U\u017Etvaros auk\u0161tis, cm'+(weir&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fweir" value="'+(weir||"")+'"'+(weir&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f fbig"><label>Ri\u0161iklio doz\u0117'+(binder&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fbind" value="'+(binder||"")+'"'+(binder&&!ed?' class="af"':"")+'></div>';
-h+='<div class="f fbig"><label>I\u0161krovimo skaitiklis, t'+(unl&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="funload" value="'+(unl||"")+'"'+(unl&&!ed?' class="af"':"")+' oninput="calcSilo()"></div>';
+h+='<div class="f fbig"><label>I\u0161krauta dabar, t</label><input type="number" inputmode="decimal" step="any" id="funload" value="'+(unlDirect||"")+'" placeholder="0" oninput="calcSilo()"></div>';
 h+='</div>';
 
 h+='<div class="slbl" style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);background:rgba(255,255,255,.03)"><span><span class="si">\uD83D\uDD12</span> Automatiniai matavimai</span><button type="button" onclick="S.unlockAuto=!S.unlockAuto;R()" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:3px 10px;font-size:.68rem;cursor:pointer">'+(S.unlockAuto?"\uD83D\uDD12 U\u017erakinti":"\uD83D\uDD13 Taisyti")+'</button></div>';
@@ -384,7 +395,7 @@ h+='<div class="slbl" style="display:flex;justify-content:space-between;align-it
 // Silo calculator
 h+='<div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas \u2192 Kiekis</div>';
 h+='<div class="fg">';
-var sp=ed?"":S.lastSilo,unl=ed?ed.unloadMeter:S.lastUnload;
+var sp=ed?"":S.lastSilo;
 h+='<div class="f"><label>Silosas prie\u0161 %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs1" value="'+sp+'" placeholder="pvz. 0" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+ro+'></div>';
 h+='<div class="f"><label>Silosas po %'+(sp&&!ed?' <span class="at">auto</span>':"")+' <span style="font-size:.6rem;color:var(--text-muted);text-transform:none;font-weight:400">(patikrink/atnaujink)</span></label><input type="number" inputmode="decimal" step="any" id="fs2" value="'+(ed?ed.siloAfter||"":sp)+'" placeholder="pvz. 43" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+'></div>';
 h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"'+ro+'></div>';
@@ -406,11 +417,8 @@ function calcSilo(){
   var s1=$("#fs1"),s2=$("#fs2"),fl=$("#funload"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
   if(!s1||!s2||!fq)return;
   var b=parseFloat(s1.value),a=parseFloat(s2.value);
-  var prevUnload=parseFloat(S.lastUnload);
-  if(isNaN(prevUnload))prevUnload=0;
-  var curUnload=parseFloat(fl?fl.value:"");
-  var unloaded=0;
-  if(!isNaN(curUnload)){unloaded=curUnload-prevUnload;if(unloaded<0)unloaded=0}
+  var unloaded=parseFloat(fl?fl.value:"")||0;
+  if(unloaded<0)unloaded=0;
   if(isNaN(b)||isNaN(a)){box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";return}
   var d=(siloTons(a)-siloTons(b))+unloaded;
   if(d>=0){
@@ -426,7 +434,20 @@ function calcSilo(){
   }
 }
 function ugd(){const gi=$("#fg");if(!gi)return;const last=S.entries.length>0?S.entries[S.entries.length-1]:null;const b=$("#gdb");const curDate=$("#fd")?$("#fd").value:null;if(!last||!curDate){if(b)b.style.display="none";return}if(last.date!==curDate){b.style.display="flex";$("#gdv").textContent=fm(0);return}const d=df(gi.value,last.gasMeter);if(d!==null){b.style.display="flex";$("#gdv").textContent=fm(d)}else b.style.display="none"}
-async function hSave(){var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,elektra:$("#fel").value,dryerTemp:$("#fdr").value,dryerSupplyTemp:$("#fdrsup").value,dryerExhaustTemp:$("#fdrexh").value,outdoorTemp:$("#fo").value,outdoorHumidity:$("#foh").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value,feedRpm:$("#ffeed").value,binderDose:$("#fbind").value,unloadMeter:$("#funload").value,siloAfter:s2v};if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.feedRpm){S.lastFeedRpm=d.feedRpm;localStorage.setItem("kv_feedrpm",d.feedRpm)}if(d.binderDose){S.lastBinder=d.binderDose;localStorage.setItem("kv_binder",d.binderDose)}if(d.unloadMeter){S.lastUnload=d.unloadMeter;localStorage.setItem("kv_unload",d.unloadMeter)}if(d.elektra){S.lastElektra=d.elektra;localStorage.setItem("kv_elektra",d.elektra)}if(d.dryerSupplyTemp){S.lastDrySupply=d.dryerSupplyTemp;localStorage.setItem("kv_drysup",d.dryerSupplyTemp)}if(d.dryerExhaustTemp){S.lastDryExhaust=d.dryerExhaustTemp;localStorage.setItem("kv_dryexh",d.dryerExhaustTemp)}if(d.gasMeter){S.lastGas=d.gasMeter;localStorage.setItem("kv_gas",d.gasMeter)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
+async function hSave(){
+  if(!S.editEntry&&!S.unlockAuto){
+    await fetchAndApply();
+    const refreshMap={fg:"lastGas",fel:"lastElektra",fdr:"lastD",fdrsup:"lastDrySupply",fdrexh:"lastDryExhaust",frpm:"lastRpm",ffeed:"lastFeedRpm",fwfl:"lastWater",fs1:"lastSilo"};
+    Object.keys(refreshMap).forEach(id=>{const el=$("#"+id);if(el)el.value=S[refreshMap[id]]||""});
+  }
+  var directUnload=parseFloat($("#funload").value)||0;
+  var refPrev=S.editEntry?(function(){var i=S.entries.indexOf(S.editEntry);return i>0?S.entries[i-1]:null})():(S.entries.length>0?S.entries[S.entries.length-1]:null);
+  var s2v=$("#fs2")?$("#fs2").value:"";const d={date:$("#fd").value,hour:$("#fh").value,worker:$("#fw").value,quantity:$("#fq").value,gasMeter:$("#fg").value,elektra:$("#fel").value,dryerTemp:$("#fdr").value,dryerSupplyTemp:$("#fdrsup").value,dryerExhaustTemp:$("#fdrexh").value,outdoorTemp:$("#fo").value,outdoorHumidity:$("#foh").value,granRpm:$("#frpm").value,waterFlow:$("#fwfl").value,weirHeight:$("#fweir").value,feedRpm:$("#ffeed").value,binderDose:$("#fbind").value,siloAfter:s2v};
+  var isSameDayUnload=refPrev&&refPrev.date===d.date;
+  var prevCumulativeUnload=isSameDayUnload?(parseFloat(refPrev.unloadMeter)||0):0;
+  var newCumulativeUnload=prevCumulativeUnload+directUnload;
+  d.unloadMeter=newCumulativeUnload>0?newCumulativeUnload:"";
+  if(!d.date)return;if(s2v){S.lastSilo=s2v;localStorage.setItem("kv_silo",s2v)}if(d.granRpm){S.lastRpm=d.granRpm;localStorage.setItem("kv_rpm",d.granRpm)}if(d.feedRpm){S.lastFeedRpm=d.feedRpm;localStorage.setItem("kv_feedrpm",d.feedRpm)}if(d.binderDose){S.lastBinder=d.binderDose;localStorage.setItem("kv_binder",d.binderDose)}if(d.unloadMeter){S.lastUnload=d.unloadMeter;localStorage.setItem("kv_unload",d.unloadMeter)}if(d.elektra){S.lastElektra=d.elektra;localStorage.setItem("kv_elektra",d.elektra)}if(d.dryerSupplyTemp){S.lastDrySupply=d.dryerSupplyTemp;localStorage.setItem("kv_drysup",d.dryerSupplyTemp)}if(d.dryerExhaustTemp){S.lastDryExhaust=d.dryerExhaustTemp;localStorage.setItem("kv_dryexh",d.dryerExhaustTemp)}if(d.gasMeter){S.lastGas=d.gasMeter;localStorage.setItem("kv_gas",d.gasMeter)}if(d.waterFlow){S.lastWater=d.waterFlow;localStorage.setItem("kv_water",d.waterFlow)}if(d.weirHeight){S.lastWeir=d.weirHeight;localStorage.setItem("kv_weir",d.weirHeight)}if(S.editEntry){d.row=S.editEntry.row;d.gasPrice=S.editEntry.gasPrice;d.elPrice=S.editEntry.elPrice;await saveEdit(d)}else await saveNew(d)}
 
 // ── Filter bar HTML ──
 function shiftRange(type,off){
