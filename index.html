@@ -249,6 +249,7 @@ function parseHour(v){if(!v)return"";const s=String(v);if(s.includes("T")){try{c
 function sNum(v){if(v===""||v===null||v===undefined)return"";const n=parseFloat(v);if(isNaN(n))return"";if(n>999999||n<-999999)return"";return v}
 function timeDelta(e1,e2){
   if(!e1||!e2||!e1.date||!e2.date||!e1.hour||!e2.hour)return"";
+  if(e1.date!==e2.date)return"";
   var d1=new Date(e1.date+"T"+e1.hour),d2=new Date(e2.date+"T"+e2.hour);
   if(isNaN(d1)||isNaN(d2))return"";
   var mins=Math.round((d2-d1)/60000);if(mins<=0)return"";
@@ -308,7 +309,7 @@ function calcSummary(fi){
     const sup=parseFloat(e.dryerSupplyTemp);if(!isNaN(sup)){sumSup+=sup;cntSup++}
     const exh=parseFloat(e.dryerExhaustTemp);if(!isNaN(exh)){sumExh+=exh;cntExh++}
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
-    if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
+    if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
   const tph=totalMins>0?tQ/(totalMins/60):null;
   return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,tph,totalMins};
 }
@@ -537,13 +538,13 @@ function rSummary(fi,sm){
   +'<div class="stt"><span class="sl">t / valand\u0105</span><span class="sv">'+(sm.tph!==null?sm.tph.toFixed(1):'\u2014')+'</span></div>'
   +'<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(sm.tG))+'</span></div>'
   +'<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+sm.gC.toFixed(2)+'</span></div>'
+  +'<div class="stt"><span class="sl">Duj\u0173 \u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.gC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
   +'<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(sm.tE))+' kWh</span></div>'
   +'<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+sm.eC.toFixed(2)+'</span></div>'
+  +'<div class="stt"><span class="sl">Elektros \u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.eC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
   +'<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+sm.tC.toFixed(2)+'</span></div>'
   +'<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
   +'<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div>'
-  +'<div class="stt"><span class="sl">Vid. d\u017Eiov. \u00B0C (prod.)</span><span class="sv">'+(sm.avgDry!==null?sm.avgDry.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
-  +'<div class="stt"><span class="sl">Vid. tiek. \u00B0C</span><span class="sv">'+(sm.avgDrySupply!==null?sm.avgDrySupply.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
   +'<div class="stt"><span class="sl">Vid. i\u0161. \u00B0C</span><span class="sv">'+(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
   +'<div class="stt"><span class="sl">Vid. lauko \u00B0C</span><span class="sv">'+(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
   +'</div></div>';
