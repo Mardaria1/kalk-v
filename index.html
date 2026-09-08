@@ -77,18 +77,23 @@ thead .sc{background:var(--surface-2);z-index:3}
 .td-qty{font-weight:700;font-size:.88rem;font-family:var(--mono)}
 .td-dry{font-family:var(--mono);font-size:.78rem;color:#ef4444;display:block}
 .td-out{font-family:var(--mono);font-size:.72rem;color:var(--ok);display:block;margin-top:1px}
+.td-outline{font-family:var(--mono);font-size:.72rem;color:var(--ok);display:block;margin-top:0}
 .tbl-legend{display:flex;gap:14px;padding:8px 10px;font-size:.68rem;color:var(--text-muted);font-family:var(--font)}
 .tbl-legend .lp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
 .sgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .drow{cursor:pointer}
 .drow:hover{background:rgba(255,255,255,.03)}
-.rchev{color:var(--text-muted);font-size:.7rem;margin-right:4px}
+.bdet{background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:4px 9px;font-family:var(--font);font-size:.68rem;font-weight:600;cursor:pointer;margin-right:6px;white-space:nowrap;transition:all .15s}
+.bdet:hover{border-color:var(--accent);color:var(--accent)}
+.bdet.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .ddrow td{background:rgba(255,255,255,.025);padding:10px 12px!important}
 .ddgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px 14px}
 .ddi{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:4px}
 .ddl{font-size:.68rem;color:var(--text-muted)}
 .ddv{font-size:.78rem;font-family:var(--mono);color:var(--text)}
 .ddu{font-size:.62rem;color:var(--text-muted)}
+.sgrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.sgrow>.sgrp{flex:1 1 260px;min-width:0;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:4px}
 .sgrp{margin-top:14px}
 .sgrp:first-of-type{margin-top:4px}
 .sgrp-t{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px}
@@ -477,7 +482,7 @@ function rFormEntry(dt,hr,ed){
   h+='</div>';
   h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
   h+='<div class="slbl" style="color:#f59e0b;background:rgba(245,158,11,.08)"><span class="si">\uD83D\uDD25\u26A1</span> Dujos / Elektra</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis'+(g&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'"'+(g&&!ed?' class="af"':"")+ro+' oninput="ugd()"></div><div class="f"><label>Elektros skaitiklis, kWh'+(elk&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fel" value="'+(elk||"")+'"'+(elk&&!ed?' class="af"':"")+ro+'></div><div class="calc" id="gdb" style="display:none"><span class="cl">Duj\u0173 skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
-  h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>Produkto \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Tiekiamo \u00B0C'+(sup&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrsup" value="'+(sup||"")+'"'+(sup&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>I\u0161einan\u010dio \u00B0C'+(exh&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrexh" value="'+(exh||"")+'"'+(exh&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko dr\u0117gnumas, %'+(oH!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="foh" value="'+oH+'"'+(oH!==""&&!ed?' class="af"':"")+ro+'></div></div>';
+  h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>Produkto \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko dr\u0117gnumas, %'+(oH!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="foh" value="'+oH+'"'+(oH!==""&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Tiekiamo \u00B0C'+(sup&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrsup" value="'+(sup||"")+'"'+(sup&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>I\u0161einan\u010dio \u00B0C'+(exh&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrexh" value="'+(exh||"")+'"'+(exh&&!ed?' class="af"':"")+ro+'></div></div>';
   h+='<div class="slbl" style="color:#06b6d4;background:rgba(6,182,212,.08)"><span class="si">\u2699\uFE0F</span> Granuliatorius</div><div class="fg">';
   h+='<div class="f"><label>Apsukos'+(rpm&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="frpm" value="'+(rpm||"")+'"'+(rpm&&!ed?' class="af"':"")+ro+'></div>';
   h+='<div class="f"><label>Padavimo apsukos, %'+(feed&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="ffeed" value="'+(feed||"")+'"'+(feed&&!ed?' class="af"':"")+ro+'></div>';
@@ -616,7 +621,7 @@ function rSummary(fi,sm){
   var salygos=tile("Vid. i\u0161. \u00B0C",(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014'))
     +tile("Vid. lauko \u00B0C",(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014'));
   return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2>'
-    +grp("Gamyba",gamyba)+grp("Ka\u0161tai",kastai)+grp("S\u0105lygos",salygos)+'</div>';
+    +'<div class="sgrow">'+grp("Gamyba",gamyba)+grp("S\u0105lygos",salygos)+'</div>'+grp("Ka\u0161tai",kastai)+'</div>';
 }
 
 // ── Table ──
@@ -649,9 +654,9 @@ function rTable(){
     h+='<td style="text-align:right;vertical-align:top"><span class="td-main">'+fm(elReading(e))+'</span>';
     if(ed!==null&&qty>0){h+='<div class="td-row"><span class="td-delta">\u0394 '+fm(ed)+'</span></div>'}
     h+='</td>';
-    h+='<td style="text-align:right;vertical-align:top;font-size:.75rem;line-height:1.6"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><br><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span> <span class="td-out">'+(e.outdoorHumidity||"\u2014")+'%</span></td>';
+    h+='<td style="text-align:right;vertical-align:top;font-size:.75rem;line-height:1.5"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><span class="td-outline">'+(e.outdoorTemp||"\u2014")+'\u00B0 / '+(e.outdoorHumidity||"\u2014")+'%</span></td>';
     h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.75rem;line-height:1.6;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.62rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.62rem">H\u2082O</span></td>';
-    h+='<td class="ac" style="vertical-align:top"><span class="rchev">'+(isOpen?"\u25B4":"\u25BE")+'</span><button class="bi" onclick="event.stopPropagation();startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="event.stopPropagation();deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
+    h+='<td class="ac" style="vertical-align:top"><button class="bdet'+(isOpen?" on":"")+'" onclick="event.stopPropagation();toggleRow('+e.row+')" title="Daugiau informacijos">'+(isOpen?"\u25B4 Ma\u017eiau":"\u25BE Daugiau")+'</button><button class="bi" onclick="event.stopPropagation();startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="event.stopPropagation();deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
     if(isOpen){
       const dv=function(l,v,u){return'<div class="ddi"><span class="ddl">'+l+'</span><span class="ddv">'+((v===""||v==null)?"\u2014":v)+(u&&v!==""&&v!=null?' <span class="ddu">'+u+'</span>':"")+'</span></div>'};
