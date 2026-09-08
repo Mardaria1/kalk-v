@@ -324,15 +324,16 @@ function calcSummary(fi){
       const ed=elReadingDelta(e,prev,next);if(ed!==null){tE+=ed;eC+=ed*epE}}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
-  let sumDry=0,cntDry=0,sumOut=0,cntOut=0,sumSup=0,cntSup=0,sumExh=0,cntExh=0;
+  let sumDry=0,cntDry=0,sumOut=0,cntOut=0,sumSup=0,cntSup=0,sumExh=0,cntExh=0,sumHum=0,cntHum=0;
   let totalMins=0;
   fi.forEach(e=>{const d=parseFloat(e.dryerTemp);if(!isNaN(d)){sumDry+=d;cntDry++}const o=parseFloat(e.outdoorTemp);if(!isNaN(o)){sumOut+=o;cntOut++}
     const sup=parseFloat(e.dryerSupplyTemp);if(!isNaN(sup)){sumSup+=sup;cntSup++}
     const exh=parseFloat(e.dryerExhaustTemp);if(!isNaN(exh)){sumExh+=exh;cntExh++}
+    const hum=parseFloat(e.outdoorHumidity);if(!isNaN(hum)){sumHum+=hum;cntHum++}
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
     if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
   const tph=totalMins>0?tQ/(totalMins/60):null;
-  return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,tph,totalMins};
+  return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
 }
 
 async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
@@ -540,7 +541,7 @@ function cmpLabel(type,off){
 }
 
 function rFilterBar(){
-  const psAll=[{k:"day",l:"Diena",o:0},{k:"today",l:"\u0160iandien",t:"day",o:0},{k:"week",l:"Savait\u0117",o:0},{k:"month",l:"M\u0117nuo",o:0},{k:"lastmonth",l:"Pra\u0117j.m\u0117n.",t:"month",o:-1},{k:"year",l:"Metai",o:0},{k:"lastyear",l:"Pra\u0117j.metai",t:"year",o:-1},{k:"all",l:"Viskas",o:0},{k:"custom",l:"Datos...",o:0}];
+  const psAll=[{k:"day",l:"Diena",o:0},{k:"today",l:"\u0160iandien",o:0},{k:"week",l:"Savait\u0117",o:0},{k:"month",l:"M\u0117nuo",o:0},{k:"lastmonth",l:"Pra\u0117j.m\u0117n.",t:"month",o:-1},{k:"year",l:"Metai",o:0},{k:"lastyear",l:"Pra\u0117j.metai",t:"year",o:-1},{k:"all",l:"Viskas",o:0},{k:"custom",l:"Datos...",o:0}];
   const psShort=[{k:"day",l:"Diena",o:0},{k:"week",l:"Savait\u0117",o:0},{k:"month",l:"M\u0117nuo",o:0},{k:"year",l:"Metai",o:0}];
   var canNav=S.fl!=="all"&&S.fl!=="custom";
   var ps=S.cmp&&canNav?psShort:psAll;
@@ -619,7 +620,8 @@ function rSummary(fi,sm){
     +tile("Viso \u20AC",'\u20AC'+sm.tC.toFixed(2))
     +tile("\u20AC / t",(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014"));
   var salygos=tile("Vid. i\u0161. \u00B0C",(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014'))
-    +tile("Vid. lauko \u00B0C",(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014'));
+    +tile("Vid. lauko \u00B0C",(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014'))
+    +tile("Vid. dr\u0117gnumas",(sm.avgHum!==null?sm.avgHum.toFixed(0)+'%':'\u2014'));
   return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2>'
     +'<div class="sgrow">'+grp("Gamyba",gamyba)+grp("S\u0105lygos",salygos)+'</div>'+grp("Ka\u0161tai",kastai)+'</div>';
 }
