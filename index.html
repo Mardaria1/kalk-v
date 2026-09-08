@@ -481,6 +481,7 @@ function rFormEntry(dt,hr,ed){
   h+='<div class="f"><label>Silosas po %'+(sp&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fs2" value="'+(ed?ed.siloAfter||"":sp)+'" placeholder="pvz. 43" oninput="calcSilo()"'+(sp&&!ed?' class="af"':"")+'></div>';
   h+='<div class="f"><label>Kiekis, t <span id="siloTag" class="at" style="display:none">auto</span></label><input type="number" inputmode="decimal" step="any" id="fq" value="'+q+'"'+ro+'></div>';
   h+='</div>';
+  h+='<div class="fg" style="margin-top:10px"><div class="f fbig"><label>I\u0161krauta per \u0161\u012f laikotarp\u012f, t <span style="font-size:.6rem;color:var(--text-dim);text-transform:none;font-weight:400">(tik skai\u010Diavimui, ne\u012fra\u0161oma)</span></label><input type="number" inputmode="decimal" step="any" id="fcalcunl" placeholder="0" oninput="calcSilo()"></div></div>';
   h+='<div class="calc" id="siloRes" style="display:none;margin-top:8px"><span class="cl">Apskai\u010Diuota i\u0161 siloso</span><span class="cv" id="siloVal">\u2014</span></div>';
   h+='<div class="slbl" style="color:#f59e0b;background:rgba(245,158,11,.08)"><span class="si">\uD83D\uDD25\u26A1</span> Dujos / Elektra</div><div class="fg"><div class="f"><label>Duj\u0173 skaitiklis'+(g&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fg" value="'+g+'"'+(g&&!ed?' class="af"':"")+ro+' oninput="ugd()"></div><div class="f"><label>Elektros skaitiklis, kWh'+(elk&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fel" value="'+(elk||"")+'"'+(elk&&!ed?' class="af"':"")+ro+'></div><div class="calc" id="gdb" style="display:none"><span class="cl">Duj\u0173 skirtumas</span><span class="cv" id="gdv">\u2014</span></div></div>';
   h+='<div class="slbl st"><span class="si">\uD83C\uDF21\uFE0F</span> Temp.</div><div class="fg"><div class="f"><label>Produkto \u00B0C'+(dr&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdr" value="'+(dr||"")+'"'+(dr&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko \u00B0C'+(oT!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fo" value="'+oT+'"'+(oT!==""&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Lauko dr\u0117gnumas, %'+(oH!==""&&!ed?' <span class="at">Venta</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="foh" value="'+oH+'"'+(oH!==""&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>Tiekiamo \u00B0C'+(sup&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrsup" value="'+(sup||"")+'"'+(sup&&!ed?' class="af"':"")+ro+'></div><div class="f"><label>I\u0161einan\u010dio \u00B0C'+(exh&&!ed?' <span class="at">auto</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fdrexh" value="'+(exh||"")+'"'+(exh&&!ed?' class="af"':"")+ro+'></div></div>';
@@ -495,16 +496,16 @@ function rFormEntry(dt,hr,ed){
 }
 
 function calcSilo(){
-  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag");
+  var s1=$("#fs1"),s2=$("#fs2"),box=$("#siloRes"),val=$("#siloVal"),fq=$("#fq"),tag=$("#siloTag"),cu=$("#fcalcunl");
   if(!s1||!s2||!fq)return;
   var b=parseFloat(s1.value),a=parseFloat(s2.value);
   if(isNaN(b)||isNaN(a)){box.style.display="none";fq.classList.remove("af");if(tag)tag.style.display="none";return}
-  // Iskrautas kiekis CIA neskaiciuojamas - jis tik issaugomas ir bus panaudotas
-  // PLC sinchronizacijos metu, kai bus zinomas realus siloso rodmuo.
-  var d=siloTons(a)-siloTons(b);
+  var unl=parseFloat(cu?cu.value:"")||0;if(unl<0)unl=0;
+  var siloD=siloTons(a)-siloTons(b);
+  var d=siloD+unl;
   if(d>=0){
     box.style.display="flex";
-    val.textContent=d.toFixed(1)+" t";
+    val.textContent=d.toFixed(1)+" t"+(unl>0?'  ('+(siloD>=0?"+":"")+siloD.toFixed(1)+" silosas + "+unl.toFixed(1)+" i\u0161kr.)":"");
     fq.value=d.toFixed(1);fq.classList.add("af");
     if(tag)tag.style.display="inline";
   }else{
