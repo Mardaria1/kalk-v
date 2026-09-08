@@ -80,6 +80,18 @@ thead .sc{background:var(--surface-2);z-index:3}
 .tbl-legend{display:flex;gap:14px;padding:8px 10px;font-size:.68rem;color:var(--text-muted);font-family:var(--font)}
 .tbl-legend .lp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
 .sgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.drow{cursor:pointer}
+.drow:hover{background:rgba(255,255,255,.03)}
+.rchev{color:var(--text-muted);font-size:.7rem;margin-right:4px}
+.ddrow td{background:rgba(255,255,255,.025);padding:10px 12px!important}
+.ddgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px 14px}
+.ddi{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:4px}
+.ddl{font-size:.68rem;color:var(--text-muted)}
+.ddv{font-size:.78rem;font-family:var(--mono);color:var(--text)}
+.ddu{font-size:.62rem;color:var(--text-muted)}
+.sgrp{margin-top:14px}
+.sgrp:first-of-type{margin-top:4px}
+.sgrp-t{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px}
 .stt{background:var(--bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px}
 .stt .sl{font-size:.66rem;color:var(--text-muted);text-transform:uppercase;font-weight:600}
 .stt .sv{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)}
@@ -238,7 +250,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastFeedRpm:localStorage.getItem("kv_feedrpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",lastGas:localStorage.getItem("kv_gas")||"",lastBinder:localStorage.getItem("kv_binder")||"",lastElektra:localStorage.getItem("kv_elektra")||"",lastDrySupply:localStorage.getItem("kv_drysup")||"",lastDryExhaust:localStorage.getItem("kv_dryexh")||"",savingUnload:false,unloads:[],savingParams:false,params:[],formMode:"unload",oTemp:null,oHum:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null,unlockAuto:false};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"form",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastFeedRpm:localStorage.getItem("kv_feedrpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",lastGas:localStorage.getItem("kv_gas")||"",lastBinder:localStorage.getItem("kv_binder")||"",lastElektra:localStorage.getItem("kv_elektra")||"",lastDrySupply:localStorage.getItem("kv_drysup")||"",lastDryExhaust:localStorage.getItem("kv_dryexh")||"",savingUnload:false,unloads:[],savingParams:false,params:[],formMode:"unload",openRow:null,oTemp:null,oHum:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"month",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null,unlockAuto:false};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -588,21 +600,23 @@ function rComparison(fi1,sm1,fi2,sm2){
 // ── Summary HTML ──
 function rSummary(fi,sm){
   if(fi.length<1)return"";
-  return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2><div class="sgr">'
-  +'<div class="stt"><span class="sl">Pagaminta</span><span class="sv">'+sm.tQ.toFixed(1)+' t</span></div>'
-  +'<div class="stt"><span class="sl">t / valand\u0105</span><span class="sv">'+(sm.tph!==null?sm.tph.toFixed(1):'\u2014')+'</span></div>'
-  +'<div class="stt"><span class="sl">Duj\u0173 suv.</span><span class="sv">'+fm(Math.round(sm.tG))+'</span></div>'
-  +'<div class="stt"><span class="sl">Duj\u0173 \u20AC</span><span class="sv">\u20AC'+sm.gC.toFixed(2)+'</span></div>'
-  +'<div class="stt"><span class="sl">Duj\u0173 \u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.gC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
-  +'<div class="stt"><span class="sl">Elektra</span><span class="sv">'+fm(Math.round(sm.tE))+' kWh</span></div>'
-  +'<div class="stt"><span class="sl">Elektros \u20AC</span><span class="sv">\u20AC'+sm.eC.toFixed(2)+'</span></div>'
-  +'<div class="stt"><span class="sl">Elektros \u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.eC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
-  +'<div class="stt"><span class="sl">Viso \u20AC</span><span class="sv">\u20AC'+sm.tC.toFixed(2)+'</span></div>'
-  +'<div class="stt"><span class="sl">\u20AC / t</span><span class="sv">'+(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014")+'</span></div>'
-  +'<div class="stt"><span class="sl">\u012Era\u0161\u0173</span><span class="sv">'+fi.length+'</span></div>'
-  +'<div class="stt"><span class="sl">Vid. i\u0161. \u00B0C</span><span class="sv">'+(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
-  +'<div class="stt"><span class="sl">Vid. lauko \u00B0C</span><span class="sv">'+(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014')+'</span></div>'
-  +'</div></div>';
+  function tile(label,val){return'<div class="stt"><span class="sl">'+label+'</span><span class="sv">'+val+'</span></div>'}
+  function grp(title,tiles){return'<div class="sgrp"><div class="sgrp-t">'+title+'</div><div class="sgr">'+tiles+'</div></div>'}
+  var gamyba=tile("Pagaminta",sm.tQ.toFixed(1)+' t')
+    +tile("t / valand\u0105",(sm.tph!==null?sm.tph.toFixed(1):'\u2014'))
+    +tile("\u012era\u0161\u0173",fi.length);
+  var kastai=tile("Duj\u0173 suv.",fm(Math.round(sm.tG)))
+    +tile("Duj\u0173 \u20AC",'\u20AC'+sm.gC.toFixed(2))
+    +tile("Duj\u0173 \u20AC / t",(sm.tQ>0?"\u20AC"+(sm.gC/sm.tQ).toFixed(2):"\u2014"))
+    +tile("Elektra",fm(Math.round(sm.tE))+' kWh')
+    +tile("Elektros \u20AC",'\u20AC'+sm.eC.toFixed(2))
+    +tile("Elektros \u20AC / t",(sm.tQ>0?"\u20AC"+(sm.eC/sm.tQ).toFixed(2):"\u2014"))
+    +tile("Viso \u20AC",'\u20AC'+sm.tC.toFixed(2))
+    +tile("\u20AC / t",(sm.tQ>0?"\u20AC"+(sm.tC/sm.tQ).toFixed(2):"\u2014"));
+  var salygos=tile("Vid. i\u0161. \u00B0C",(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014'))
+    +tile("Vid. lauko \u00B0C",(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014'));
+  return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2>'
+    +grp("Gamyba",gamyba)+grp("Ka\u0161tai",kastai)+grp("S\u0105lygos",salygos)+'</div>';
 }
 
 // ── Table ──
@@ -624,7 +638,8 @@ function rTable(){
     const td2=prev?timeDelta(prev,e):"";
     const qty=parseFloat(e.quantity)||0;
     const gpt=(gd!==null&&qty>0)?Math.round(gd/qty):null;
-    h+='<tr>';
+    const isOpen=S.openRow===e.row;
+    h+='<tr class="drow" onclick="toggleRow('+e.row+')">';
     h+='<td class="sc" style="vertical-align:top"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2&&qty>0?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
     h+='<td class="wc" style="vertical-align:top">'+(e.worker||"\u2014")+'</td>';
     h+='<td style="text-align:right;vertical-align:top"><span class="td-qty">'+fm(e.quantity)+'</span></td>';
@@ -636,14 +651,26 @@ function rTable(){
     h+='</td>';
     h+='<td style="text-align:right;vertical-align:top;font-size:.75rem;line-height:1.6"><span class="td-dry">'+(e.dryerTemp||"\u2014")+'\u00B0</span><br><span class="td-out">'+(e.outdoorTemp||"\u2014")+'\u00B0</span> <span class="td-out">'+(e.outdoorHumidity||"\u2014")+'%</span></td>';
     h+='<td style="text-align:right;vertical-align:top;font-family:var(--mono);font-size:.75rem;line-height:1.6;color:var(--text-muted)">'+(e.granRpm||"\u2014")+' <span style="font-size:.62rem">rpm</span><br>'+(e.waterFlow||"\u2014")+' <span style="font-size:.62rem">H\u2082O</span></td>';
-    h+='<td class="ac" style="vertical-align:top"><button class="bi" onclick="startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
+    h+='<td class="ac" style="vertical-align:top"><span class="rchev">'+(isOpen?"\u25B4":"\u25BE")+'</span><button class="bi" onclick="event.stopPropagation();startEdit('+i+')">\u270F\uFE0F</button><button class="bi"'+(deleting?' disabled':'')+' onclick="event.stopPropagation();deleteEntry('+e.row+',\''+e.date+'\',\''+(e.hour||'')+'\')">\uD83D\uDDD1\uFE0F</button></td>';
     h+='</tr>';
+    if(isOpen){
+      const dv=function(l,v,u){return'<div class="ddi"><span class="ddl">'+l+'</span><span class="ddv">'+((v===""||v==null)?"\u2014":v)+(u&&v!==""&&v!=null?' <span class="ddu">'+u+'</span>':"")+'</span></div>'};
+      h+='<tr class="ddrow"><td colspan="9"><div class="ddgrid">'
+        +dv("Tiekiamo temp.",e.dryerSupplyTemp,"\u00B0C")
+        +dv("I\u0161einan\u010dio temp.",e.dryerExhaustTemp,"\u00B0C")
+        +dv("Padavimo apsukos",e.feedRpm,"%")
+        +dv("U\u017Etvaros auk\u0161tis",e.weirHeight,"cm")
+        +dv("Ri\u0161iklio doz\u0117",e.binderDose,"")
+        +dv("Silosas po",e.siloAfter,"%")
+        +'</div></td></tr>';
+    }
   });
   h+='</tbody></table></div>';
-  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Temp: prod. / lauko \u00B7 Gran: rpm / H\u2082O</span></div>';
+  h+='<div class="tbl-legend"><span><span class="lp" style="background:#ef4444"></span>D\u017Eiov.</span><span><span class="lp" style="background:var(--ok)"></span>Lauko</span><span style="color:var(--diff)">\u0394 = skirtumas</span><span>Temp: prod. / lauko \u00B7 Gran: rpm / H\u2082O</span><span style="color:var(--accent)">Spausk eilut\u0119 \u2014 daugiau</span></div>';
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
+function toggleRow(r){S.openRow=(S.openRow===r)?null:r;R()}
 function startEdit(i){S.editEntry=S.entries[i];S.view="form";S.formMode="entry";R();window.scrollTo({top:0,behavior:"smooth"})}
 
 // ── Charts + PDF ──
