@@ -664,13 +664,13 @@ function rTable(){
     if(isOpen){
       const dv=function(l,v,u){return'<div class="ddi"><span class="ddl">'+l+'</span><span class="ddv">'+((v===""||v==null)?"\u2014":v)+(u&&v!==""&&v!=null?' <span class="ddu">'+u+'</span>':"")+'</span></div>'};
       h+='<tr class="ddrow"><td colspan="9"><div class="ddgrid">'
+        +dv("Ri\u0161iklio doz\u0117",e.binderDose,"")
+        +dv("U\u017Etvaros auk\u0161tis",e.weirHeight,"cm")
+        +dv("Granuliat. apsukos",e.granRpm,"rpm")
+        +dv("Padavimo apsukos",e.feedRpm,"%")
+        +dv("Vandens kiekis",e.waterFlow,"")
         +dv("Tiekiamo temp.",e.dryerSupplyTemp,"\u00B0C")
         +dv("I\u0161einan\u010dio temp.",e.dryerExhaustTemp,"\u00B0C")
-        +dv("Padavimo apsukos",e.feedRpm,"%")
-        +dv("U\u017Etvaros auk\u0161tis",e.weirHeight,"cm")
-        +dv("Ri\u0161iklio doz\u0117",e.binderDose,"")
-        +dv("Vandens kiekis",e.waterFlow,"")
-        +dv("Silosas po",e.siloAfter,"%")
         +'</div></td></tr>';
     }
   });
