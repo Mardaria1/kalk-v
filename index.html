@@ -255,7 +255,7 @@ function jr(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"table",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastFeedRpm:localStorage.getItem("kv_feedrpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",lastGas:localStorage.getItem("kv_gas")||"",lastBinder:localStorage.getItem("kv_binder")||"",lastElektra:localStorage.getItem("kv_elektra")||"",lastDrySupply:localStorage.getItem("kv_drysup")||"",lastDryExhaust:localStorage.getItem("kv_dryexh")||"",savingUnload:false,unloads:[],savingParams:false,params:[],formMode:"unload",openRow:null,oTemp:null,oHum:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"today",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null,unlockAuto:false};
+let S={url:localStorage.getItem("kv_url")||"https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec",entries:[],view:"table",saving:false,step:1,lastW:localStorage.getItem("kv_w")||"",lastD:localStorage.getItem("kv_d")||"",lastSilo:localStorage.getItem("kv_silo")||"",lastRpm:localStorage.getItem("kv_rpm")||"",lastFeedRpm:localStorage.getItem("kv_feedrpm")||"",lastWater:localStorage.getItem("kv_water")||"",lastWeir:localStorage.getItem("kv_weir")||"",lastGas:localStorage.getItem("kv_gas")||"",lastBinder:localStorage.getItem("kv_binder")||"",lastElektra:localStorage.getItem("kv_elektra")||"",lastDrySupply:localStorage.getItem("kv_drysup")||"",lastDryExhaust:localStorage.getItem("kv_dryexh")||"",savingUnload:false,unloads:[],savingParams:false,params:[],formMode:"unload",openRows:[],oTemp:null,oHum:null,cfg:JSON.parse(localStorage.getItem("kv_cfg")||"null")||{gp:0.57,ep:0.20,dn:1.4},fl:"today",ff:"",ft:"",navOff:0,cmp:false,cmpOff:-1,editEntry:null,unlockAuto:false};
 let charts={};
 
 function $(s){return document.querySelector(s)}
@@ -646,7 +646,7 @@ function rTable(){
     const td2=prev?timeDelta(prev,e):"";
     const qty=parseFloat(e.quantity)||0;
     const gpt=(gd!==null&&qty>0)?Math.round(gd/qty):null;
-    const isOpen=S.openRow===e.row;
+    const isOpen=S.openRows.indexOf(e.row)!==-1;
     h+='<tr class="drow" onclick="toggleRow('+e.row+')">';
     h+='<td class="sc" style="vertical-align:top"><span class="td-date">'+e.date+'</span><br><span class="td-time">'+(e.hour||"")+''+(td2&&qty>0?'<span class="td-tbadge">'+td2+'</span>':"")+'</span></td>';
     h+='<td class="wc" style="vertical-align:top">'+(e.worker||"\u2014")+'</td>';
@@ -679,7 +679,7 @@ function rTable(){
   h+='</div><div style="text-align:center;margin-top:14px"><button class="bt" onclick="load()">\uD83D\uDD04 Atnaujinti</button></div>';
   return h;
 }
-function toggleRow(r){S.openRow=(S.openRow===r)?null:r;R()}
+function toggleRow(r){var i=S.openRows.indexOf(r);if(i===-1)S.openRows.push(r);else S.openRows.splice(i,1);R()}
 function startEdit(i){S.editEntry=S.entries[i];S.view="form";S.formMode="entry";R();window.scrollTo({top:0,behavior:"smooth"})}
 
 // ── Charts + PDF ──
