@@ -331,7 +331,7 @@ function calcSummary(fi){
     const exh=parseFloat(e.dryerExhaustTemp);if(!isNaN(exh)){sumExh+=exh;cntExh++}
     const hum=parseFloat(e.outdoorHumidity);if(!isNaN(hum)){sumHum+=hum;cntHum++}
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
-    if(prev&&qty>0&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
+    if(prev&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
   const tph=totalMins>0?tQ/(totalMins/60):null;
   return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
 }
@@ -1220,7 +1220,7 @@ function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.rem
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-09d</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-10a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
