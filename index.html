@@ -635,7 +635,64 @@ function rComparison(fi1,sm1,fi2,sm2){
     h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.72rem">'+r[3]+'</td></tr>';
   });
   h+='</tbody></table></div>';
+  h+=rHourlyCompare(fi1,fi2,l1,l2);
   return h;
+}
+// Valandinis palyginimas: kiekviena valanda A ir B greta
+function hourMap(fi){
+  var m={};
+  fi.forEach(function(e){
+    if(!e.hour)return;
+    var k=e.hour;
+    if(!m[k])m[k]={qty:0,rpm:null,feed:null,water:null,n:0};
+    m[k].qty+=parseFloat(e.quantity)||0;
+    var r=parseFloat(e.granRpm);
+    if(!isNaN(r)&&r>=MIN_RUNNING_RPM){
+      m[k].rpm=e.granRpm;m[k].feed=e.feedRpm;m[k].water=e.waterFlow;
+    }
+    m[k].n++;
+  });
+  return m;
+}
+function rHourlyCompare(fi1,fi2,l1,l2){
+  var mA=hourMap(fi1),mB=hourMap(fi2);
+  var keys=Object.keys(mA).concat(Object.keys(mB)).filter(function(v,i,a){return a.indexOf(v)===i}).sort();
+  if(keys.length===0)return"";
+  var totA=0,totB=0;
+  keys.forEach(function(k){if(mA[k])totA+=mA[k].qty;if(mB[k])totB+=mB[k].qty});
+  var h='<div class="card"><h2>\u23F1 Valandinis palyginimas</h2>';
+  h+='<div style="display:flex;gap:12px;margin-bottom:10px;font-size:.75rem;flex-wrap:wrap">';
+  h+='<span style="color:var(--accent);font-weight:600">\u25CF A: '+l1+'</span>';
+  h+='<span style="color:var(--diff);font-weight:600">\u25CF B: '+l2+'</span></div>';
+  h+='<div class="ts"><table style="width:100%;border-collapse:collapse;font-size:.78rem"><thead><tr>';
+  h+='<th style="text-align:left;padding:5px 6px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border)">Val.</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--accent);font-size:.7rem;font-weight:700;border-bottom:1px solid var(--border)">A, t</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--diff);font-size:.7rem;font-weight:700;border-bottom:1px solid var(--border)">B, t</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border)">\u0394</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--accent);font-size:.66rem;border-bottom:1px solid var(--border)">A: rpm/pad./H\u2082O</th>';
+  h+='<th style="text-align:right;padding:5px 6px;color:var(--diff);font-size:.66rem;border-bottom:1px solid var(--border)">B: rpm/pad./H\u2082O</th></tr></thead><tbody>';
+  function prm(o){
+    if(!o||o.rpm===null||o.rpm===undefined)return'<span style="color:var(--text-muted)">\u2014</span>';
+    return(o.rpm||"\u2014")+" / "+(o.feed||"\u2014")+" / "+(o.water||"\u2014");
+  }
+  keys.forEach(function(k){
+    var a=mA[k],b=mB[k];
+    var qa=a?a.qty:null,qb=b?b.qty:null;
+    h+='<tr><td style="padding:4px 6px;font-family:var(--mono);color:var(--text-dim)">'+k+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-weight:600">'+(qa!==null?qa.toFixed(1):"\u2014")+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-weight:600">'+(qb!==null?qb.toFixed(1):"\u2014")+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.72rem">'+((qa!==null&&qb!==null)?cmpVal(qa,qb," t"):"\u2014")+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.68rem;color:var(--text-muted)">'+prm(a)+'</td>';
+    h+='<td style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.68rem;color:var(--text-muted)">'+prm(b)+'</td></tr>';
+  });
+  h+='<tr style="border-top:1px solid var(--border)"><td style="padding:6px;font-weight:700;color:var(--text-dim)">Viso</td>';
+  h+='<td style="text-align:right;padding:6px;font-family:var(--mono);font-weight:700">'+totA.toFixed(1)+'</td>';
+  h+='<td style="text-align:right;padding:6px;font-family:var(--mono);font-weight:700">'+totB.toFixed(1)+'</td>';
+  h+='<td style="text-align:right;padding:6px;font-family:var(--mono);font-size:.72rem">'+cmpVal(totA,totB," t")+'</td>';
+  h+='<td colspan="2"></td></tr>';
+  h+='</tbody></table></div>';
+  h+='<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px">Parametrai rodomi tik i\u0161 valand\u0173, kai \u012frenginys dirbo.</div>';
+  return h+'</div>';
 }
 
 // ── Summary HTML ──
@@ -1120,7 +1177,7 @@ function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.rem
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-09b</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-09c</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
