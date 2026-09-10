@@ -719,6 +719,48 @@ function rSummary(fi,sm){
 }
 
 // ── Table ──
+// Vienos dienos valandine lentele: kiekviena valanda su savo parametrais
+function rHourlyDay(fi,sm){
+  if(S.fl!=="day"&&S.fl!=="today")return"";
+  if(fi.length<1)return"";
+  var rows=fi.slice().sort(function(a,b){return(a.hour||"")<(b.hour||"")?-1:1});
+  var h='<div class="card"><h2>\u23F1 Valandin\u0117 lentel\u0117</h2>';
+  h+='<div class="ts"><table style="width:100%;border-collapse:collapse;font-size:.78rem"><thead><tr>';
+  var th='style="text-align:right;padding:5px 6px;color:var(--text-dim);font-size:.66rem;border-bottom:1px solid var(--border);white-space:nowrap"';
+  h+='<th style="text-align:left;padding:5px 6px;color:var(--text-dim);font-size:.66rem;border-bottom:1px solid var(--border)">Val.</th>';
+  h+='<th '+th+'>Kiekis, t</th><th '+th+'>t/val.</th><th '+th+'>Ri\u0161.</th><th '+th+'>U\u017Etv. cm</th>';
+  h+='<th '+th+'>Gran. rpm</th><th '+th+'>Pad. %</th><th '+th+'>H\u2082O</th><th '+th+'>Prod. \u00B0C</th></tr></thead><tbody>';
+  var td='style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.75rem"';
+  var tdm='style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.72rem;color:var(--text-muted)"';
+  function v(x){return(x===""||x==null)?"\u2014":x}
+  rows.forEach(function(e){
+    var i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
+    var qty=parseFloat(e.quantity)||0,tph=null;
+    if(prev&&prev.date===e.date&&e.hour&&prev.hour){
+      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
+      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)tph=qty/(m/60)}
+    }
+    var rpmVal=parseFloat(e.granRpm);
+    var idle=!isNaN(rpmVal)&&rpmVal<MIN_RUNNING_RPM;
+    h+='<tr'+(idle?' style="opacity:.5"':'')+'>';
+    h+='<td style="padding:4px 6px;font-family:var(--mono);color:var(--text-dim)">'+(e.hour||"\u2014")+'</td>';
+    h+='<td '+td+';font-weight:700">'+fm(e.quantity)+'</td>';
+    h+='<td '+td+'>'+(tph!==null?tph.toFixed(1):"\u2014")+'</td>';
+    h+='<td '+tdm+'>'+v(e.binderDose)+'</td>';
+    h+='<td '+tdm+'>'+v(e.weirHeight)+'</td>';
+    h+='<td '+tdm+'>'+v(e.granRpm)+'</td>';
+    h+='<td '+tdm+'>'+v(e.feedRpm)+'</td>';
+    h+='<td '+tdm+'>'+v(e.waterFlow)+'</td>';
+    h+='<td '+tdm+'>'+v(e.dryerTemp)+'</td></tr>';
+  });
+  h+='<tr style="border-top:1px solid var(--border)"><td style="padding:6px;font-weight:700;color:var(--text-dim)">Viso</td>';
+  h+='<td '+td+';font-weight:700">'+sm.tQ.toFixed(1)+'</td>';
+  h+='<td '+td+';font-weight:700">'+(sm.tph!==null?sm.tph.toFixed(1):"\u2014")+'</td>';
+  h+='<td colspan="6"></td></tr>';
+  h+='</tbody></table></div>';
+  h+='<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px">Pilkos eilut\u0117s \u2014 \u012frenginys stov\u0117jo.</div>';
+  return h+'</div>';
+}
 function rTable(){
   const fi=filt(S.entries),sm=calcSummary(fi);
   let h=rFilterBar();
@@ -729,6 +771,7 @@ function rTable(){
   }
   h+=rSummary(fi,sm);
   if(!fi.length)return h+'<div class="es"><div class="icon">\uD83D\uDCED</div><p>N\u0117ra \u012Fra\u0161\u0173</p></div>';
+  h+=rHourlyDay(fi,sm);
   h+='<div class="tw"><div class="ts"><table><thead><tr><th class="sc">Data / valanda</th><th>Darb.</th><th style="text-align:right">Kiekis, t</th><th style="text-align:right">Dujos</th><th style="text-align:right">Elektra</th><th style="text-align:right">Temp.</th><th style="text-align:right">Gran.</th><th class="ac"></th></tr></thead><tbody>';
   fi.forEach(e=>{
     const i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;
@@ -1177,7 +1220,7 @@ function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.rem
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-09c</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-09d</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
