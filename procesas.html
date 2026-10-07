@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KALK V Procesas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117; --surface:#1a1d27; --surface-2:#232735; --border:#2d3244;
+  --text:#e4e6ef; --text-muted:#8b8fa7; --text-dim:#aeb2c7;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* serijos - patikrintos pries #1a1d27 pavirsiu */
+  --s1:#3987e5;   /* klintys / porcijos */
+  --s2:#d95926;   /* atsijos */
+  --s3:#199e70;   /* nasumas */
+  --ok:#10b981; --warn:#f59e0b; --bad:#e66767;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:14px}
+h1{font-size:1.15rem;margin:0;letter-spacing:-.01em}
+.sub{font-size:.76rem;color:var(--text-muted)}
+.ver{opacity:.5}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.bar button{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);
+  border-radius:8px;padding:7px 13px;font-size:.82rem;cursor:pointer;font-family:inherit}
+.bar button.on{background:var(--s1);border-color:var(--s1);color:#fff;font-weight:600}
+.bar button:hover:not(.on){background:var(--surface-2);color:var(--text)}
+.bar .sp{flex:1}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 14px}
+.tile .k{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+.tile .v{font-size:1.5rem;font-weight:650;font-family:var(--mono);margin-top:3px;letter-spacing:-.02em}
+.tile .n{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{font-size:.92rem;margin:0 0 3px;font-weight:620}
+.card .hint{font-size:.72rem;color:var(--text-muted);margin-bottom:12px}
+.wrap{position:relative;height:230px}
+.legend{display:flex;gap:14px;font-size:.74rem;color:var(--text-dim);margin-bottom:9px;flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.strip{display:flex;gap:2px;flex-wrap:wrap}
+.strip div{flex:1 1 20px;min-width:20px;height:30px;border-radius:4px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-muted);
+  font-family:var(--mono)}
+.strip div.below{background:rgba(230,103,103,.22);color:#f3a2a2;border:1px solid rgba(230,103,103,.4)}
+.strip div.above{background:rgba(16,185,129,.16);color:#7ddcb5;border:1px solid rgba(16,185,129,.32)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{text-align:left;color:var(--text-muted);font-weight:600;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.03em;padding:6px;border-bottom:1px solid var(--border)}
+td{padding:5px 6px;border-bottom:1px solid rgba(45,50,68,.5);font-family:var(--mono);color:var(--text-dim)}
+td.l{font-family:inherit}
+.num{text-align:right}
+th.num{text-align:right}
+.ts{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chg{font-size:.78rem;padding:8px 10px;border-left:3px solid var(--warn);
+  background:rgba(245,158,11,.08);border-radius:0 7px 7px 0;margin-bottom:7px}
+.chg b{font-family:var(--mono);color:var(--text)}
+.empty{color:var(--text-muted);font-size:.8rem;padding:14px 0;text-align:center}
+.note{font-size:.76rem;line-height:1.5;color:var(--text-dim);background:rgba(148,163,184,.09);
+  border-left:3px solid var(--s3);border-radius:0 7px 7px 0;padding:10px 12px;margin-top:10px}
+.note b{color:var(--text)}
+details summary{cursor:pointer;font-size:.8rem;color:var(--text-muted);padding:4px 0}
+@media(max-width:600px){.app{padding:11px}.wrap{height:200px}.tile .v{font-size:1.28rem}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>KALK V · Procesas</h1>
+    <span class="sub">dozavimas, porcijos, recirkuliacija <span class="ver">v2026-10-07a</span></span>
+  </header>
+
+  <div class="bar" id="bar"></div>
+  <div id="body"><div class="empty">Kraunama…</div></div>
+</div>
+
+<script>
+// Tas pats Web App endpointas, kaip index_3.html. Dozavimo duomenys
+// prasomi atskirai (?dosing=1), kad operatoriu programa ju nesiparsiustu.
+const URL_BASE = localStorage.getItem("kv_url") ||
+  "https://script.google.com/macros/s/AKfycbyDLi_YuLRZjY6is0BIcLuC3g2-ZhErFmU6khtbT6onOTRuttw6Y-3AyTTIhLg918CW/exec";
+
+const S = { rows: [], range: "today", charts: {} };
+
+const $ = s => document.querySelector(s);
+const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+const bool = v => { const s = String(v).toLowerCase(); return s === "true" ? true : s === "false" ? false : null; };
+const fmt = (v, d = 1) => v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(d);
+const td = () => new Date().toISOString().slice(0, 10);
+
+function shiftDate(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// ---------- duomenys ----------
+async function load() {
+  try {
+    const r = await fetch(URL_BASE + "?dosing=1", { redirect: "follow" });
+    const d = JSON.parse(await r.text());
+    S.rows = (d.dosing || []).slice().sort((a, b) =>
+      (a.date + "T" + a.hour) < (b.date + "T" + b.hour) ? -1 : 1);
+  } catch (e) {
+    S.rows = [];
+  }
+  render();
+}
+
+function filtered() {
+  if (S.range === "all") return S.rows;
+  const from = S.range === "today" ? td()
+             : S.range === "yesterday" ? shiftDate(-1)
+             : shiftDate(-6);
+  const to = S.range === "yesterday" ? shiftDate(-1) : td();
+  return S.rows.filter(r => r.date >= from && r.date <= to);
+}
+
+// ---------- virsutine juosta ----------
+function rBar() {
+  const opts = [["today", "Šiandien"], ["yesterday", "Vakar"], ["week", "7 dienos"], ["all", "Viskas"]];
+  $("#bar").innerHTML = opts.map(([k, l]) =>
+    `<button class="${S.range === k ? "on" : ""}" onclick="setRange('${k}')">${l}</button>`).join("")
+    + '<span class="sp"></span><button onclick="load()">↻ Atnaujinti</button>';
+}
+function setRange(k) { S.range = k; render(); }
+
+// ---------- isvados is duomenu ----------
+function summarize(rows) {
+  const b = rows.map(r => num(r.batches)).filter(v => v !== null && v > 0);
+  const f = rows.map(r => num(r.freshKg)).filter(v => v !== null && v > 0);
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  const last = k => { for (let i = rows.length - 1; i >= 0; i--) if (rows[i][k] !== "" && rows[i][k] != null) return rows[i][k]; return null; };
+
+  // Momentas, kai buferis atsistatė: lvl_low is false i true.
+  // Tuo metu nustatyta atsiju dalis ir yra tvarus sieto grazinimo procentas.
+  let sustainable = null;
+  for (let i = 1; i < rows.length; i++) {
+    if (bool(rows[i - 1].lvlLow) === false && bool(rows[i].lvlLow) === true) sustainable = rows[i].undersizePct;
+  }
+  const belowHours = rows.filter(r => bool(r.lvlLow) === false).length;
+
+  return {
+    batches: avg(b), tph: avg(f) === null ? null : avg(f) / 1000,
+    totalT: f.reduce((x, y) => x + y, 0) / 1000,
+    binder: last("binderPct"), undersize: last("undersizePct"),
+    sustainable, belowHours, hours: rows.length
+  };
+}
+
+// ---------- grafikai ----------
+const AX = {
+  grid: { color: "rgba(45,50,68,.65)", drawTicks: false },
+  border: { display: false },
+  ticks: { color: "#8b8fa7", font: { size: 10 }, padding: 6 }
+};
+function baseOpts(yTitle) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#232735", borderColor: "#2d3244", borderWidth: 1,
+        titleColor: "#e4e6ef", bodyColor: "#aeb2c7", padding: 10, displayColors: true,
+        cornerRadius: 7
+      }
+    },
+    scales: {
+      x: { ...AX },
+      y: { ...AX, title: { display: !!yTitle, text: yTitle, color: "#8b8fa7", font: { size: 10 } } }
+    }
+  };
+}
+function draw(id, cfg) {
+  if (S.charts[id]) S.charts[id].destroy();
+  const el = document.getElementById(id);
+  if (el) S.charts[id] = new Chart(el.getContext("2d"), cfg);
+}
+
+// Horizontalios atskaitos linijos (nulis, leistinos ribos) - be jokio papildomo plugino.
+const refLines = {
+  id: "refLines",
+  beforeDatasetsDraw(c, a, opts) {
+    if (!opts || !opts.lines) return;
+    const ctx = c.ctx, L = c.chartArea.left, R = c.chartArea.right, y = c.scales.y;
+    ctx.save();
+    opts.lines.forEach(l => {
+      const py = y.getPixelForValue(l.v);
+      if (!isFinite(py)) return;
+      ctx.beginPath();
+      ctx.setLineDash(l.dash || [5, 4]);
+      ctx.strokeStyle = l.c; ctx.lineWidth = 1;
+      ctx.moveTo(L, py); ctx.lineTo(R, py); ctx.stroke();
+      if (l.t) {
+        ctx.setLineDash([]);
+        ctx.fillStyle = l.c; ctx.font = "10px ui-monospace,monospace";
+        ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+        ctx.fillText(l.t, R - 2, py - 2);
+      }
+    });
+    ctx.restore();
+  }
+};
+
+function labels(rows) { return rows.map(r => (r.date === td() ? "" : r.date.slice(5) + " ") + r.hour); }
+
+function drawAll(rows) {
+  const L = labels(rows);
+
+  draw("chBatches", {
+    type: "bar",
+    data: { labels: L, datasets: [{ label: "Porcijos", data: rows.map(r => num(r.batches)),
+      backgroundColor: "#3987e5", borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 26 }] },
+    options: baseOpts("porcijų / val.")
+  });
+
+  draw("chTph", {
+    type: "bar",
+    data: { labels: L, datasets: [{ label: "t/val.", data: rows.map(r => { const v = num(r.freshKg); return v === null ? null : v / 1000; }),
+      backgroundColor: "#199e70", borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 26 }] },
+    options: baseOpts("t / val.")
+  });
+
+  draw("chErr", {
+    type: "line",
+    data: { labels: L, datasets: [
+      { label: "Klinčių miltai", data: rows.map(r => num(r.limestoneErr)),
+        borderColor: "#3987e5", backgroundColor: "#3987e5", borderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 7, pointBorderColor: "#1a1d27", pointBorderWidth: 2, tension: .25 },
+      { label: "Atsijos", data: rows.map(r => num(r.undersizeErr)),
+        borderColor: "#d95926", backgroundColor: "#d95926", borderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 7, pointBorderColor: "#1a1d27", pointBorderWidth: 2, tension: .25 }
+    ] },
+    plugins: [refLines],
+    options: {
+      ...baseOpts("nuokrypis, kg"),
+      plugins: {
+        ...baseOpts().plugins,
+        refLines: { lines: [
+          { v: 0, c: "rgba(139,143,167,.75)", dash: [] },
+          { v: 10, c: "rgba(230,103,103,.55)", t: "+10 riba" },
+          { v: -5, c: "rgba(230,103,103,.55)", t: "−5 riba" }
+        ] }
+      }
+    }
+  });
+
+  draw("chDribb", {
+    type: "line",
+    data: { labels: L, datasets: [
+      { label: "Klinčių miltai", data: rows.map(r => num(r.limestoneDribb)),
+        borderColor: "#3987e5", backgroundColor: "#3987e5", borderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 7, pointBorderColor: "#1a1d27", pointBorderWidth: 2, tension: .25 },
+      { label: "Atsijos", data: rows.map(r => num(r.undersizeDribb)),
+        borderColor: "#d95926", backgroundColor: "#d95926", borderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 7, pointBorderColor: "#1a1d27", pointBorderWidth: 2, tension: .25 }
+    ] },
+    options: baseOpts("kg")
+  });
+}
+
+// ---------- atvaizdavimas ----------
+function render() {
+  rBar();
+  const rows = filtered();
+  if (!rows.length) {
+    $("#body").innerHTML = '<div class="card"><div class="empty">Šiam laikotarpiui dozavimo duomenų nėra.<br>'
+      + 'Jie pradedami kaupti nuo to momento, kai įdiegtas „Dozavimas" lapas.</div></div>';
+    return;
+  }
+  const s = summarize(rows);
+
+  let h = '<div class="tiles">'
+    + tile("Porcijų / val.", fmt(s.batches, 2), "vidurkis per " + s.hours + " val.")
+    + tile("Našumas", fmt(s.tph, 2) + " t/val.", "iš viso " + fmt(s.totalT, 1) + " t")
+    + tile("Rišiklio dozė", fmt(s.binder, 2) + " %", "nuo viso mišinio")
+    + tile("Atsijų dalis", fmt(s.undersize, 1) + " %", "padavimo užduotis")
+    + tile("Buferis žemiau min.", s.belowHours + " val.", s.belowHours ? "iš " + s.hours + " valandų" : "nė karto")
+    + '</div>';
+
+  // --- porcijos ---
+  h += card("Porcijų per valandą",
+    "Našumas = porcijos × šviežios žaliavos porcijoje. Kai krenta našumas, pirmiausia žiūrime čia: "
+    + "jei porcijų sumažėjo, kaltas dozavimo ciklas, o ne receptas ar granuliatorius.",
+    '<div class="wrap"><canvas id="chBatches"></canvas></div>');
+
+  // --- nasumas ---
+  h += card("Šviežios žaliavos, t/val.",
+    "Skaičiuojama iš dozavimo sumatorių. Atsijos neįskaitomos — jos yra recirkuliacija, ne nauja produkcija.",
+    '<div class="wrap"><canvas id="chTph"></canvas></div>');
+
+  // --- buferio juosta ---
+  h += card("Atsijų buferio būsena",
+    "Raudona — lygis žemiau minimumo. Tomis valandomis našumo skaičiai nėra palyginami su normaliomis.",
+    strip(rows) + sustainNote(s));
+
+  // --- dozavimo tikslumas ---
+  h += card("Dozavimo nuokrypis nuo užduoties",
+    "Imama tiesiai iš bloko (DQ_Out) — paskutinės užbaigtos porcijos faktinis svoris minus užduotis. "
+    + "Leistinos ribos: +10 / −5 kg.",
+    legend2() + '<div class="wrap"><canvas id="chErr"></canvas></div>');
+
+  // --- dribbout ---
+  h += card("Skrendantis kiekis (DribbOut)",
+    "Kiek medžiagos dar nukrenta sustabdžius padavimą. Bloką jį mokosi pats. "
+    + "Jei reikšmė blaškosi — medžiagos srautas nepastovus, ir derinti parametrus beprasmiška.",
+    legend2() + '<div class="wrap"><canvas id="chDribb"></canvas></div>');
+
+  // --- recepto pakeitimai ---
+  const chg = rows.filter(r => r.recipeChanged);
+  h += card("Recepto pakeitimai", chg.length ? "" : "Šiuo laikotarpiu receptas nekeistas.",
+    chg.length ? chg.map(r => '<div class="chg"><b>' + r.date + " " + r.hour + "</b> — " + r.recipeChanged + "</div>").join("") : "");
+
+  // --- lentele ---
+  h += '<div class="card"><details><summary>Visi duomenys lentele</summary>' + table(rows) + "</details></div>";
+
+  $("#body").innerHTML = h;
+  drawAll(rows);
+}
+
+function tile(k, v, n) {
+  return '<div class="tile"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="n">' + n + "</div></div>";
+}
+function card(title, hint, inner) {
+  return '<div class="card"><h2>' + title + "</h2>"
+    + (hint ? '<div class="hint">' + hint + "</div>" : "") + inner + "</div>";
+}
+function legend2() {
+  return '<div class="legend"><span><i style="background:#3987e5"></i>Klinčių miltai</span>'
+    + '<span><i style="background:#d95926"></i>Atsijos</span></div>';
+}
+function strip(rows) {
+  return '<div class="strip">' + rows.map(r => {
+    const b = bool(r.lvlLow);
+    const cls = b === false ? "below" : b === true ? "above" : "";
+    return '<div class="' + cls + '" title="' + r.date + " " + r.hour + '">' + (r.hour || "").slice(0, 2) + "</div>";
+  }).join("") + "</div>";
+}
+function sustainNote(s) {
+  if (s.sustainable !== null && s.sustainable !== "" && s.sustainable !== undefined) {
+    return '<div class="note">Buferis atsistatė, kai atsijų dalis buvo <b>' + fmt(s.sustainable, 1)
+      + ' %</b>. Tai ir yra tvarus sieto grąžinimo procentas — vadinasi geros granulės sudaro apie <b>'
+      + fmt(100 - Number(s.sustainable), 1) + ' %</b> granuliatoriaus išeigos.</div>';
+  }
+  if (s.belowHours) {
+    return '<div class="note">Buferis vis dar žemiau minimumo. Kol jis neatsistatys, tvaraus grąžinimo '
+      + "procento nustatyti negalime — grąžinama mažiau, nei paduodama atgal.</div>";
+  }
+  return "";
+}
+function table(rows) {
+  const cols = [["hour", "Val.", 0], ["batches", "Porcijos", 2], ["freshKg", "Šviežios kg", 0],
+    ["undersizeKg", "Atsijos kg", 0], ["binderPct", "Rišiklis %", 2], ["undersizePct", "Atsijos %", 1],
+    ["limestoneErr", "Klinčių ± kg", 1], ["undersizeErr", "Atsijų ± kg", 1],
+    ["limestoneDribb", "Klinčių dribb", 1], ["undersizeDribb", "Atsijų dribb", 1]];
+  let h = '<div class="ts"><table><thead><tr><th>Data</th>'
+    + cols.map(c => '<th class="num">' + c[1] + "</th>").join("") + "</tr></thead><tbody>";
+  rows.forEach(r => {
+    h += '<tr><td class="l">' + r.date + "</td>"
+      + cols.map(c => '<td class="num">' + (c[0] === "hour" ? (r.hour || "—") : fmt(r[c[0]], c[2])) + "</td>").join("")
+      + "</tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+load();
+</script>
+</body>
+</html>
