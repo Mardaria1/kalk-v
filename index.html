@@ -41,6 +41,8 @@ html,body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit
 .f.fbig input{padding:18px 14px;font-size:1.25rem;font-weight:600}
 .f input.af{background:rgba(16,185,129,.04)}
 .at{font-size:.6rem;color:var(--temp);font-weight:600;margin-left:3px}
+.autonote{font-size:.74rem;line-height:1.45;color:var(--text-dim);background:rgba(148,163,184,.1);border-left:3px solid var(--temp);border-radius:6px;padding:9px 11px;margin:10px 0 2px}
+.autonote b{color:var(--text)}
 .calc{display:flex;flex-direction:column;gap:2px;padding:8px 12px;background:rgba(167,139,250,.08);border-radius:7px;border:1px dashed var(--diff)}
 .calc .cl{font-size:.68rem;color:var(--diff);text-transform:uppercase;font-weight:600}
 .calc .cv{font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--diff)}
@@ -336,15 +338,17 @@ function calcSummary(fi){
   return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
 }
 
-async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
+async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}S.binderAuto=false;if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){var ab=lastNonEmpty("binderDose");if(ab!==""&&ab!=null){S.lastBinder=ab;S.binderAuto=true}S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
 async function load(){const ok=await fetchAndApply();if(ok)R();else toast("Nepavyko gauti duomen\u0173","fail")}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveParams(){
-  const w=$("#fweir"),b=$("#fbind");if(!w||!b)return;
-  const wv=w.value.trim(),bv=b.value.trim();
-  if(wv===""&&bv===""){toast("\u26A0 \u012eveski bent vien\u0105 reik\u0161m\u0119","fail");return}
+  // Risiklio doze ateina automatiskai is PLC recepto - ia nebesiunciam,
+  // kad rankinis irasas neuzgozetu tikrosios reiksmes.
+  const w=$("#fweir");if(!w)return;
+  const wv=w.value.trim();
+  if(wv===""){toast("\u26A0 \u012eveski u\u017etvaros auk\u0161t\u012f","fail");return}
   S.savingParams=true;R();
-  const ok=await post({action:"saveParams",date:$("#fd")?$("#fd").value:td(),hour:$("#fh")?$("#fh").value:nt(),weirHeight:wv,binderDose:bv,worker:$("#fw")?$("#fw").value:S.lastW});
+  const ok=await post({action:"saveParams",date:$("#fd")?$("#fd").value:td(),hour:$("#fh")?$("#fh").value:nt(),weirHeight:wv,binderDose:"",worker:$("#fw")?$("#fw").value:S.lastW});
   if(ok){const wv2=$("#fw")?$("#fw").value:"";if(wv2)localStorage.setItem("kv_w_params",wv2);toast("\u270B Nustatymai \u012fra\u0161yti");await load()}
   else toast("\u274C Klaida","fail");
   S.savingParams=false;R();
@@ -461,8 +465,10 @@ function rFormParams(dt,hr){
   h+=rHeadFields(dt,hr,w,null);
   h+='<div class="fg">';
   h+='<div class="f fbig"><label>U\u017Etvaros auk\u0161tis, cm'+(weir?' <span class="at">dabartinis</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fweir" value="'+(weir||"")+'"'+(weir?' class="af"':"")+'></div>';
-  h+='<div class="f fbig"><label>Ri\u0161iklio doz\u0117'+(binder?' <span class="at">dabartin\u0117</span>':"")+'</label><input type="number" inputmode="decimal" step="any" id="fbind" value="'+(binder||"")+'"'+(binder?' class="af"':"")+'></div>';
   h+='</div>';
+  // Risiklio doze nuo 2026-10-07 imama automatiskai is PLC recepto (DOSE.DQ_SP),
+  // tad rankinio laukelio nebera - likdavo pamirstas ir uzterstdavo duomenis senomis reiksmemis.
+  h+='<div class="autonote">\uD83E\uDDEA Ri\u0161iklio doz\u0117 <b>'+(binder!==""&&binder!=null?binder+" %":"\u2014")+'</b>'+(S.binderAuto?' \u2014 imama automati\u0161kai i\u0161 PLC recepto.':' \u2014 paskutin\u0117 rankiniu b\u016Bdu \u012Fvesta reik\u0161m\u0117; automatin\u0117 atsiras su pirmu PLC \u012Fra\u0161u.')+' Ranka ve\u0161ti nebereikia: pasikeitus receptui atsinaujins pati.</div>';
   h+='<button class="bsv" style="background:#f59e0b" onclick="saveParams()" '+(S.savingParams?"disabled":"")+'>'+(S.savingParams?"\u23F3...":"\u270B \u012era\u0161yti nustatymus")+'</button>';
   return h+"</div>";
 }
@@ -1220,7 +1226,7 @@ function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.rem
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-09-10a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-07a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
