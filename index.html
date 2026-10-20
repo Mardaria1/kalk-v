@@ -334,8 +334,20 @@ function calcSummary(fi){
     const hum=parseFloat(e.outdoorHumidity);if(!isNaN(hum)){sumHum+=hum;cntHum++}
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
     if(prev&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
+  // 2026-10-20: atsij\u0173 silosas 31.00, masi\u0173 balansas ir 8000RT01 svarstykl\u0117s
+  let tFresh=0,cntFresh=0,sumU=0,cntU=0,tScale=0,cntScale=0,tScaleSta=0,cntScaleSta=0,lastLvl=null;
+  fi.forEach(e=>{
+    const f=parseFloat(e.freshT);if(!isNaN(f)){tFresh+=f;cntFresh++}
+    const u=parseFloat(e.undGenPct);if(!isNaN(u)){sumU+=u;cntU++}
+    const l=parseFloat(e.und31Lvl);if(!isNaN(l))lastLvl=l;
+    const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
+    if(prev){
+      const a=parseFloat(e.prodKg),b=parseFloat(prev.prodKg);if(!isNaN(a)&&!isNaN(b)){tScale+=Math.max(0,a-b)/1000;cntScale++}
+      const a2=parseFloat(e.prodKgSta),b2=parseFloat(prev.prodKgSta);if(!isNaN(a2)&&!isNaN(b2)){tScaleSta+=Math.max(0,a2-b2)/1000;cntScaleSta++}
+    }
+  });
   const tph=totalMins>0?tQ/(totalMins/60):null;
-  return{tQ,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
+  return{tQ,tFresh:cntFresh?tFresh:null,avgU:cntU?sumU/cntU:null,tScale:cntScale?tScale:null,tScaleSta:cntScaleSta?tScaleSta:null,lastLvl,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
 }
 
 async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}S.binderAuto=false;if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){var ab=lastNonEmpty("binderDose");if(ab!==""&&ab!=null){S.lastBinder=ab;S.binderAuto=true}S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
@@ -720,8 +732,14 @@ function rSummary(fi,sm){
   var salygos=tile("Vid. i\u0161. \u00B0C",(sm.avgDryExhaust!==null?sm.avgDryExhaust.toFixed(1)+'\u00B0':'\u2014'))
     +tile("Vid. lauko \u00B0C",(sm.avgOut!==null?sm.avgOut.toFixed(1)+'\u00B0':'\u2014'))
     +tile("Vid. dr\u0117gnumas",(sm.avgHum!==null?sm.avgHum.toFixed(0)+'%':'\u2014'));
-  return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20AC'+sm.gP.toFixed(2)+' / el. \u20AC'+sm.eP.toFixed(3)+')</span></h2>'
-    +'<div class="sgrow">'+grp("Gamyba",gamyba)+grp("S\u0105lygos",salygos)+'</div>'+grp("Ka\u0161tai",kastai)+'</div>';
+  var atsijos="";
+  if(sm.tFresh!==null)atsijos+=tile("\u0160vie\u017eios \u017ealiavos",sm.tFresh.toFixed(1)+' t');
+  if(sm.lastLvl!==null)atsijos+=tile("Atsij\u0173 silosas 31.00",sm.lastLvl.toFixed(0)+'%');
+  if(sm.avgU!==null)atsijos+=tile("Atsij\u0173 susidarymas (vid.)",sm.avgU.toFixed(0)+'%');
+  if(sm.tScale!==null)atsijos+=tile("8000RT01 (1 var.)",sm.tScale.toFixed(1)+' t');
+  if(sm.tScaleSta!==null)atsijos+=tile("8000RT01 (2 var.)",sm.tScaleSta.toFixed(1)+' t');
+  return'<div class="card"><h2>\uD83D\uDCCA Suvestin\u0117 <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">(duj\u0173 \u20ac'+sm.gP.toFixed(2)+' / el. \u20ac'+sm.eP.toFixed(3)+')</span></h2>'
+    +'<div class="sgrow">'+grp("Gamyba",gamyba)+grp("S\u0105lygos",salygos)+'</div>'+(atsijos?grp("Atsijos ir svarstykl\u0117s",atsijos):"")+grp("Ka\u0161tai",kastai)+'</div>';
 }
 
 // ── Table ──
@@ -735,7 +753,8 @@ function rHourlyDay(fi,sm){
   var th='style="text-align:right;padding:5px 6px;color:var(--text-dim);font-size:.66rem;border-bottom:1px solid var(--border);white-space:nowrap"';
   h+='<th style="text-align:left;padding:5px 6px;color:var(--text-dim);font-size:.66rem;border-bottom:1px solid var(--border)">Val.</th>';
   h+='<th '+th+'>Kiekis, t</th><th '+th+'>t/val.</th><th '+th+'>Ri\u0161.</th><th '+th+'>U\u017Etv. cm</th>';
-  h+='<th '+th+'>Gran. rpm</th><th '+th+'>Pad. %</th><th '+th+'>H\u2082O</th><th '+th+'>Prod. \u00B0C</th></tr></thead><tbody>';
+  var hasAts=rows.some(function(e){return e.und31Lvl!==""&&e.und31Lvl!=null});
+  h+='<th '+th+'>Gran. rpm</th><th '+th+'>Pad. %</th><th '+th+'>H\u2082O</th><th '+th+'>Prod. \u00b0C</th>'+(hasAts?'<th '+th+'>Ats. sil. %</th><th '+th+'>Ats. u %</th>':'')+'</tr></thead><tbody>';
   var td='style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.75rem"';
   var tdm='style="text-align:right;padding:4px 6px;font-family:var(--mono);font-size:.72rem;color:var(--text-muted)"';
   function v(x){return(x===""||x==null)?"\u2014":x}
@@ -757,12 +776,12 @@ function rHourlyDay(fi,sm){
     h+='<td '+tdm+'>'+v(e.granRpm)+'</td>';
     h+='<td '+tdm+'>'+v(e.feedRpm)+'</td>';
     h+='<td '+tdm+'>'+v(e.waterFlow)+'</td>';
-    h+='<td '+tdm+'>'+v(e.dryerTemp)+'</td></tr>';
+    h+='<td '+tdm+'>'+v(e.dryerTemp)+'</td>'+(hasAts?'<td '+tdm+'>'+v(e.und31Lvl)+'</td><td '+tdm+'>'+v(e.undGenPct)+'</td>':'')+'</tr>';
   });
   h+='<tr style="border-top:1px solid var(--border)"><td style="padding:6px;font-weight:700;color:var(--text-dim)">Viso</td>';
   h+='<td '+td+';font-weight:700">'+sm.tQ.toFixed(1)+'</td>';
   h+='<td '+td+';font-weight:700">'+(sm.tph!==null?sm.tph.toFixed(1):"\u2014")+'</td>';
-  h+='<td colspan="6"></td></tr>';
+  h+='<td colspan="'+(hasAts?8:6)+'"></td></tr>';
   h+='</tbody></table></div>';
   h+='<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px">Pilkos eilut\u0117s \u2014 \u012frenginys stov\u0117jo.</div>';
   return h+'</div>';
@@ -810,7 +829,13 @@ function rTable(){
         +dv("Padavimo apsukos",e.feedRpm,"%")
         +dv("Vandens kiekis",e.waterFlow,"")
         +dv("Tiekiamo temp.",e.dryerSupplyTemp,"\u00B0C")
-        +dv("I\u0161einan\u010dio temp.",e.dryerExhaustTemp,"\u00B0C")
+        +dv("I\u0161einan\u010dio temp.",e.dryerExhaustTemp,"\u00b0C")
+        +dv("Atsij\u0173 silosas 31.00",e.und31Lvl,"%")
+        +dv("Atsij\u0173 siloso pokytis",e.und31DeltaT,"t")
+        +dv("\u0160vie\u017eia \u017ealiava",e.freshT,"t")
+        +dv("Atsij\u0173 susidarymas",e.undGenPct,"%")
+        +dv("8000RT01 (1 var.)",e.prodKg,"kg")
+        +dv("8000RT01 (2 var.)",e.prodKgSta,"kg")
         +'</div></td></tr>';
     }
   });
@@ -1226,7 +1251,7 @@ function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.rem
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-07a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-20a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
