@@ -350,7 +350,7 @@ function calcSummary(fi){
   return{tQ,tFresh:cntFresh?tFresh:null,avgU:cntU?sumU/cntU:null,tScale:cntScale?tScale:null,tScaleSta:cntScaleSta?tScaleSta:null,lastLvl,tG,tE,gP,eP,gC,eC,tC:gC+eC,imap,avgDry:cntDry?sumDry/cntDry:null,avgOut:cntOut?sumOut/cntOut:null,avgDrySupply:cntSup?sumSup/cntSup:null,avgDryExhaust:cntExh?sumExh/cntExh:null,avgHum:cntHum?sumHum/cntHum:null,tph,totalMins};
 }
 
-async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url,{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}S.binderAuto=false;if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){var ab=lastNonEmpty("binderDose");if(ab!==""&&ab!=null){S.lastBinder=ab;S.binderAuto=true}S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
+async function fetchAndApply(){if(!S.url)return false;try{const r=await fetch(S.url+(S.url.indexOf("?")<0?"?":"&")+"dosing=1&energy=1",{redirect:"follow"});const t=await r.text();const d=JSON.parse(t);if(d.config){if(d.config.gasPrice)S.cfg.gp=d.config.gasPrice;if(d.config.elPrice)S.cfg.ep=d.config.elPrice;if(d.config.density)S.cfg.dn=d.config.density;PM_MAP.forEach(m=>{const v=d.config[m[1]];if(v!==undefined&&v!==""&&v!==null&&!isNaN(+v))S.cfg[m[0]]=+v});localStorage.setItem("kv_cfg",JSON.stringify(S.cfg))}S.unloads=d.unloads||[];S.params=d.params||[];S.dosing=d.dosing||[];S.energy=d.energy||[];if(S.params.length){for(let i=S.params.length-1;i>=0;i--){if(S.params[i].weirHeight!==""&&S.params[i].weirHeight!=null){S.lastWeir=S.params[i].weirHeight;break}}for(let i=S.params.length-1;i>=0;i--){if(S.params[i].binderDose!==""&&S.params[i].binderDose!=null){S.lastBinder=S.params[i].binderDose;break}}}S.binderAuto=false;if(d.entries){d.entries.forEach(e=>{e.hour=parseHour(e.hour);e.quantity=sNum(e.quantity);e.gasMeter=sNum(e.gasMeter);EL.forEach(m=>{e["el"+m]=sNum(e["el"+m])});e.dryerTemp=sNum(e.dryerTemp);e.outdoorTemp=sNum(e.outdoorTemp);e.gasPrice=sNum(e.gasPrice);e.elPrice=sNum(e.elPrice);e.granRpm=sNum(e.granRpm);e.waterFlow=sNum(e.waterFlow);e.weirHeight=sNum(e.weirHeight);e.feedRpm=sNum(e.feedRpm);e.outdoorHumidity=sNum(e.outdoorHumidity);e.siloAfter=sNum(e.siloAfter);e.binderDose=sNum(e.binderDose);e.elektra=sNum(e.elektra);e.dryerSupplyTemp=sNum(e.dryerSupplyTemp);e.dryerExhaustTemp=sNum(e.dryerExhaustTemp)});S.entries=d.entries;S.entries.sort((a,b)=>{const ka=(a.date||"")+"T"+(a.hour||"00:00"),kb=(b.date||"")+"T"+(b.hour||"00:00");return ka<kb?-1:ka>kb?1:0});if(S.entries.length>0){var ab=lastNonEmpty("binderDose");if(ab!==""&&ab!=null){S.lastBinder=ab;S.binderAuto=true}S.lastW=lastNonEmpty("worker")||S.lastW;S.lastD=lastNonEmpty("dryerTemp")||S.lastD;S.lastRpm=lastNonEmpty("granRpm")||S.lastRpm;S.lastFeedRpm=lastNonEmpty("feedRpm")||S.lastFeedRpm;S.lastWater=lastNonEmpty("waterFlow")||S.lastWater;S.lastGas=lastNonEmpty("gasMeter")||S.lastGas;S.lastSilo=lastNonEmpty("siloAfter")||S.lastSilo;S.lastElektra=lastNonEmpty("elektra")||S.lastElektra;S.lastDrySupply=lastNonEmpty("dryerSupplyTemp")||S.lastDrySupply;S.lastDryExhaust=lastNonEmpty("dryerExhaustTemp")||S.lastDryExhaust}}return true}catch(e){return false}}
 async function load(){const ok=await fetchAndApply();if(ok)R();else toast("Nepavyko gauti duomen\u0173","fail")}
 async function post(p){try{await fetch(S.url,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});return true}catch(e){return false}}
 async function saveParams(){
@@ -1245,25 +1245,292 @@ function updateSiloTbl(){var el=$("#siloTblContent");if(el)el.innerHTML=genSiloT
 
 function rCfg(){
   return'<div class="card"><h2>\u2699\uFE0F Nustatymai</h2><div class="slbl sg"><span class="si">\uD83D\uDD25</span> Duj\u0173 kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E vnt.</label><input type="number" step="0.01" id="cg" value="'+S.cfg.gp+'"></div></div><div class="slbl se"><span class="si">\u26A1</span> Elektros kaina</div><div class="fg"><div class="f"><label>\u20AC u\u017E kWh</label><input type="number" step="0.001" id="ce" value="'+S.cfg.ep+'"></div></div><div class="slbl" style="color:#8b5cf6;background:rgba(139,92,246,.08)"><span class="si">\uD83C\uDFED</span> Silosas</div><div class="fg"><div class="f"><label>Med\u017Eiagos tankis, t/m\u00B3</label><input type="number" step="0.01" id="cdn" value="'+S.cfg.dn+'" oninput="updateSiloTbl()"></div></div><button class="bt" style="margin-top:10px" onclick="var t=$(\'#siloTbl\');t.style.display=t.style.display===\'none\'?\'block\':\'none\';if(t.style.display===\'block\')updateSiloTbl()">\uD83D\uDCCA Siloso % \u2192 tonos lentel\u0117</button><div id="siloTbl" style="display:none;margin-top:12px"><div id="siloTblContent"></div></div><div class="slbl sst"><span class="si">\uD83D\uDD17</span> Google Sheets</div><div class="f" style="margin-bottom:12px"><label>Script URL</label><input type="text" id="cu" value="'+S.url+'" style="font-family:var(--mono);font-size:.78rem"></div><button class="bss" onclick="sCfg()">\uD83D\uDCBE I\u0161saugoti</button><div style="text-align:center"><button class="bdc" onclick="reset()">\uD83D\uDDD1\uFE0F Atjungti</button></div></div>'}
-async function sCfg(){S.cfg={gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0,dn:parseFloat($("#cdn").value)||1.4};localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u)}try{await post({action:"saveConfig",gasPrice:S.cfg.gp,elPrice:S.cfg.ep,density:S.cfg.dn})}catch(e){}toast("\u2705 I\u0161saugota ir sinchronizuota!");if(u&&u!==S.url)load()}
+async function sCfg(){S.cfg=Object.assign({},S.cfg,{gp:parseFloat($("#cg").value)||0,ep:parseFloat($("#ce").value)||0,dn:parseFloat($("#cdn").value)||1.4});const pmP={};PM_MAP.forEach(m=>{const el=$("#pm_"+m[0]);if(el&&el.value!==""&&!isNaN(parseFloat(el.value))){S.cfg[m[0]]=parseFloat(el.value);pmP[m[1]]=S.cfg[m[0]]}});localStorage.setItem("kv_cfg",JSON.stringify(S.cfg));const u=$("#cu").value.trim();if(u&&u!==S.url){S.url=u;localStorage.setItem("kv_url",u)}try{await post({action:"saveConfig",gasPrice:S.cfg.gp,elPrice:S.cfg.ep,density:S.cfg.dn,...pmP})}catch(e){}toast("\u2705 I\u0161saugota ir sinchronizuota!");if(u&&u!==S.url)load()}
 function reset(){if(confirm("Atjungti?")){S.url="";S.entries=[];localStorage.removeItem("kv_url");R()}}
+
+// ── Pelnas: pamainos / mėnesio ataskaita ir scenarijai (2026-10-24) ──
+// Modelis kaip Excel „KALK V pelno modelis": savikaina €/t = žaliava + rišiklis + darbas + dujos + elektra + kitos + maišai.
+// Pamaina = viena darbo diena (08–16 ar ilgiau). Dujos priskiriamos pamainai su įšilimu ir atvėsimu (lapas „Energija“).
+const PM_DEF={sp:112,rm:36.6,bp:510,lm:18000,lh:176,ot:5.74,bgp:3.6,bgt:2,gi:20};
+const PM_MAP=[["sp","salePrice"],["rm","rawPrice"],["bp","binderPrice"],["lm","laborMonth"],["lh","laborHours"],["ot","otherPerT"],["bgp","bagPrice"],["bgt","bagsPerT"],["gi","gasIdleMin"]];
+const PM_LBL={sp:["Pardavimo kaina","€/t"],rm:["Žaliava (kalkės)","€/t gatavo produkto"],bp:["Rišiklio kaina","€/t rišiklio"],lm:["Darbo užmokestis","€/mėn."],lh:["Darbo valandos per mėnesį","val."],ot:["Kitos išlaidos","€/t"],bgp:["Maišo kaina","€/vnt."],bgt:["Maišų per toną","vnt./t"],gi:["Tuščios eigos dujų riba","m³/val."]};
+function pmc(k){const v=S.cfg[k];return(v===undefined||v===null||v===""||isNaN(+v))?PM_DEF[k]:+v}
+S.pm={tab:"shift",date:null,month:null,scT:null,scGas:null};
+
+const PM_H=3600000;
+function pmTs(d,h){return new Date(d+"T"+(h||"00:00")).getTime()}
+function pmMed(a){const s=a.slice().sort((x,y)=>x-y);return s.length?s[Math.floor(s.length/2)]:null}
+function pmN(v){const n=parseFloat(v);return isNaN(n)?null:n}
+function pmF(v,d){return v===null||v===undefined||isNaN(v)?"—":Number(v).toLocaleString("lt-LT",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function pmEur(v,d){return v===null||v===undefined||isNaN(v)?"—":(v<0?"−":"")+"€"+Math.abs(v).toLocaleString("lt-LT",{minimumFractionDigits:d===undefined?2:d,maximumFractionDigits:d===undefined?2:d})}
+function pmIsRun(e){const r=pmN(e.granRpm);if(r!==null)return r>=MIN_RUNNING_RPM;return(pmN(e.quantity)||0)>0}
+function pmRows(date){return S.entries.filter(e=>e.date===date).sort((a,b)=>pmTs(a.date,a.hour)-pmTs(b.date,b.hour))}
+function pmDates(){return[...new Set(S.entries.map(e=>e.date))].filter(Boolean).sort()}
+
+// Veikimo valandos: pilnos eilutės = 1 val., pirma ir paskutinė (dalinės) – pagal santykį su vidutiniu kiekiu
+function pmHours(rows){
+  const run=rows.filter(pmIsRun);
+  if(run.length<3)return run.length;
+  const q=run.map(e=>pmN(e.quantity)||0),m=pmMed(q.slice(1,-1))||0;
+  const fr=x=>m>0?Math.min(1,x/m):1;
+  return(run.length-2)+fr(q[0])+fr(q[q.length-1]);
+}
+function pmHoursOv(date){try{const v=localStorage.getItem("kv_pmh_"+date);if(v===null||v==="")return null;const n=parseFloat(v);return isNaN(n)?null:n}catch(e){return null}}
+function pmSetHours(v){const d=S.pm.date;try{if(v===""||isNaN(parseFloat(v)))localStorage.removeItem("kv_pmh_"+d);else localStorage.setItem("kv_pmh_"+d,String(parseFloat(v)))}catch(e){}R()}
+
+// Valandinis energijos žurnalas (lapas „Energija“): dujos/elektra net stovėjimo valandomis
+function pmEnergyMap(){
+  if(S._pmEKey!==S.energy){
+    S._pmEKey=S.energy;
+    S._pmEM=new Map((S.energy||[]).map(x=>[pmTs(x.date,x.hour),{gas:pmN(x.gas),kwh:pmN(x.kwh),outT:pmN(x.outT)}]).filter(x=>!isNaN(x[0])));
+  }
+  return S._pmEM;
+}
+function pmEnergyShift(rows){
+  const run=rows.filter(pmIsRun);if(!run.length)return null;
+  const M=pmEnergyMap();if(!M.size)return null;
+  const thr=pmc("gi"),hs=pmTs(run[0].date,run[0].hour),he=pmTs(run[run.length-1].date,run[run.length-1].hour);
+  let b=hs-PM_H;if(!M.has(b)||M.get(b).gas===null)return null;
+  let warm=0;
+  while(warm<4){const cur=M.get(b),prv=M.get(b-PM_H);if(!cur||!prv||cur.gas===null||prv.gas===null)break;if(cur.gas-prv.gas>thr){b-=PM_H;warm++}else break}
+  let e=he;if(!M.has(e)||M.get(e).gas===null)return null;
+  let cool=0;
+  while(cool<4){const cur=M.get(e),nx=M.get(e+PM_H);if(!nx||nx.gas===null)break;if(nx.gas-cur.gas>thr){e+=PM_H;cool++}else break}
+  const A=M.get(b),B=M.get(e),g=B.gas-A.gas;
+  if(!(g>=0))return null;
+  const k=(A.kwh===null||B.kwh===null||B.kwh<A.kwh)?null:B.kwh-A.kwh;
+  return{gas:g,kwh:k,warm:warm,cool:cool,src:"energija"};
+}
+function pmEnergyLegacy(rows){
+  let g=0,k=0,gok=false,kok=false;
+  rows.forEach(e=>{
+    const i=S.entries.indexOf(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;
+    const gd=gasReadingDelta(e,prev,next);if(gd!==null&&gd>=0){g+=gd;gok=true}
+    const ed=elReadingDelta(e,prev,next);if(ed!==null&&ed>=0){k+=ed;kok=true}
+  });
+  return{gas:gok?g:null,kwh:kok?k:null,warm:0,cool:0,src:"skaitikliai"};
+}
+// Dozavimo duomenys (lapas „Dozavimas“): šviežia žaliava, atsijos, rišiklis
+function pmDosing(date){
+  const ds=(S.dosing||[]).filter(x=>x.date===date);
+  let F=0,D=0,Hm=0,n=0,bs=0,bn=0;
+  ds.forEach(x=>{
+    const f=pmN(x.freshKg),u=pmN(x.undersizeKg),b=pmN(x.binderPct);
+    if(f===null||u===null)return;
+    F+=f;D+=u;n++;
+    if(b!==null){Hm+=b/100*(f+u);bs+=b;bn++}
+  });
+  return n?{freshT:F/1000,undT:D/1000,humusT:Hm/1000,binderPct:bn?bs/bn:null,n:n}:null;
+}
+
+function pmCalc(date){
+  const rows=pmRows(date);if(!rows.length)return null;
+  const P=rows.reduce((s,e)=>s+(pmN(e.quantity)||0),0);
+  if(P<0.05)return null;
+  const auto=pmHours(rows),ov=pmHoursOv(date),hrs=ov!==null?ov:auto;
+  const en=pmEnergyShift(rows)||pmEnergyLegacy(rows);
+  const ds=pmDosing(date);
+  const gp=pmN(rows[0].gasPrice)||S.cfg.gp,ep=pmN(rows[0].elPrice)||S.cfg.ep;
+  const outs=rows.map(e=>pmN(e.outdoorTemp)).filter(x=>x!==null&&x>-35&&x<50);
+  const outT=outs.length?outs.reduce((a,b)=>a+b,0)/outs.length:null;
+  const bd=rows.map(e=>pmN(e.binderDose)).filter(x=>x!==null&&x>0);
+  const u=ds&&ds.freshT+ds.undT>0?ds.undT/(ds.undT+ds.freshT):null;
+  const binderPct=ds&&ds.binderPct!==null?ds.binderPct:(bd.length?bd.reduce((a,b)=>a+b,0)/bd.length:2);
+  const labH=pmc("lm")/pmc("lh");
+  const labor=hrs*labH,gasE=(en.gas||0)*gp,elE=(en.kwh||0)*ep;
+  const binderE=ds?ds.humusT*pmc("bp"):P*pmc("bp")*binderPct/100/(1-(u===null?0.45:u));
+  const lines=[
+    ["Žaliava (kalkės)",pmc("rm")*P],
+    ["Rišiklis",binderE],
+    ["Darbas",labor],
+    ["Dujos",gasE],
+    ["Elektra",elE],
+    ["Kitos išlaidos",pmc("ot")*P],
+    ["Maišai",pmc("bgp")*pmc("bgt")*P]
+  ];
+  const cost=lines.reduce((s,l)=>s+l[1],0),revenue=pmc("sp")*P;
+  const Fh=hrs>0?(labor+gasE+elE)/hrs:null,V=pmc("rm")+pmc("ot")+pmc("bgp")*pmc("bgt"),b=pmc("bp")*binderPct/100;
+  const den=pmc("sp")-V-b/(1-(u===null?0:u));
+  const notes=[];
+  if(en.src==="skaitikliai")notes.push("Dujos pagal skaitiklių skirtumą (valandinio „Energija“ žurnalo šiai dienai dar nėra) – įšilimas ir atvėsimas gali būti priskirti kitai dienai.");
+  else notes.push("Dujų langas: įšilimas "+en.warm+" val. + darbas + atvėsimas "+en.cool+" val.");
+  if(!ds)notes.push("Dozavimo duomenų šiai dienai nėra – rišiklis ir atsijų dalis įvertinti (u 45 %).");
+  if(ov===null&&rows.filter(pmIsRun).length>=3)notes.push("Veikimo valandos įvertintos pagal pirmos ir paskutinės eilutės kiekį; galima pataisyti ranka.");
+  return{date:date,P:P,hrs:hrs,hrsAuto:auto,hrsOv:ov,thr:hrs>0?P/hrs:null,u:u,en:en,gasE:gasE,elE:elE,labor:labor,lines:lines,cost:cost,revenue:revenue,
+    costT:cost/P,profitT:(revenue-cost)/P,profit:revenue-cost,Fh:Fh,V:V,b:b,binderPct:binderPct,breakEven:(den>0&&Fh!==null)?Fh/den:null,
+    outT:outT,gasPerH:hrs>0&&en.gas!==null?en.gas/hrs:null,kwhPerH:hrs>0&&en.kwh!==null?en.kwh/hrs:null,gp:gp,ep:ep,notes:notes,ds:ds};
+}
+
+// Dujų sąnaudos val. priklausomybė nuo lauko temperatūros (tiesinė regresija per ankstesnes pamainas)
+function pmGasFit(){
+  const pts=[];
+  pmDates().forEach(d=>{const s=pmCalc(d);if(s&&s.hrs>=4&&s.outT!==null&&s.gasPerH>0)pts.push([s.outT,s.gasPerH])});
+  if(pts.length<4)return null;
+  const n=pts.length,mx=pts.reduce((a,p)=>a+p[0],0)/n,my=pts.reduce((a,p)=>a+p[1],0)/n;
+  let sxy=0,sxx=0,syy=0;pts.forEach(p=>{sxy+=(p[0]-mx)*(p[1]-my);sxx+=(p[0]-mx)**2;syy+=(p[1]-my)**2});
+  if(sxx<1)return null;
+  const b=sxy/sxx,a=my-b*mx;
+  return{a:a,b:b,n:n,r2:syy>0?sxy*sxy/(sxx*syy):0,at:t=>Math.max(0,a+b*t)};
+}
+// Pelnas €/t, kai pralaidumas (gatavo produkto t/h) ir atsijų dalis žinomi
+function pmProfitAt(u,thr,Fh,s){return pmc("sp")-(s.V+s.b/(1-u)+Fh/thr)}
+function pmBreakAt(u,Fh,s){const den=pmc("sp")-s.V-s.b/(1-u);return den>0?Fh/den:null}
+
+// ── UI ──
+function pmCls(v){return v>=0?"var(--ok)":"var(--danger)"}
+function pmTile(l,v,c){return'<div class="stt"><span class="sl">'+l+'</span><span class="sv"'+(c?' style="color:'+c+'"':'')+'>'+v+'</span></div>'}
+function pmTabs(){
+  const t=S.pm.tab,b=(k,l)=>'<button class="'+(t===k?"active":"")+'" onclick="S.pm.tab=\''+k+'\';R()">'+l+'</button>';
+  return'<div class="nav" style="margin-bottom:12px">'+b("shift","Pamaina")+b("month","Mėnuo")+b("scen","Scenarijai")+'</div>';
+}
+function pmNavShift(d){
+  const ds=pmDates().filter(x=>{const s=pmCalc(x);return s});
+  const i=ds.indexOf(S.pm.date);
+  const bt=(dir,l)=>{const j=i+dir;const ok=j>=0&&j<ds.length;return'<button class="bt" style="width:44px"'+(ok?' onclick="S.pm.date=\''+ds[j]+'\';R()"':' disabled style="width:44px;opacity:.4"')+'>'+l+'</button>'};
+  return'<div style="display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:14px">'+bt(-1,"◀")+'<input type="date" value="'+d+'" onchange="S.pm.date=this.value;R()" style="padding:9px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--mono)">'+bt(1,"▶")+'</div>';
+}
+function rPmShift(){
+  const s=pmCalc(S.pm.date);
+  let h=pmNavShift(S.pm.date);
+  if(!s)return h+'<div class="card"><div class="es"><p>Šią dieną gamybos įrašų nėra</p></div></div>';
+  h+='<div class="card"><h2>💶 Pamainos pelnas <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">('+s.date+')</span></h2>';
+  h+='<div class="sgr">'
+    +pmTile("Pagaminta",pmF(s.P,1)+" t")
+    +pmTile("Veikimas",pmF(s.hrs,1)+" val.")
+    +pmTile("Pralaidumas",pmF(s.thr,2)+" t/val.")
+    +pmTile("Atsijų dalis",s.u===null?"—":pmF(s.u*100,0)+"%")
+    +pmTile("Savikaina",pmEur(s.costT)+"/t")
+    +pmTile("Pelnas €/t",pmEur(s.profitT),pmCls(s.profitT))
+    +pmTile("Pelnas / nuostolis",pmEur(s.profit,0),pmCls(s.profit))
+    +'</div>';
+  h+='<div style="margin-top:14px" class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse;font-size:.8rem"><thead><tr>'
+    +'<th style="text-align:left;padding:8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">Eilutė</th>'
+    +'<th style="text-align:right;padding:8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">€/t</th>'
+    +'<th style="text-align:right;padding:8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">€ viso</th>'
+    +'<th style="text-align:right;padding:8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">%</th></tr></thead><tbody>';
+  const mono='style="text-align:right;padding:6px 8px;font-family:var(--mono)"';
+  s.lines.forEach(l=>{h+='<tr><td style="padding:6px 8px">'+l[0]+'</td><td '+mono+'>'+pmF(l[1]/s.P,2)+'</td><td '+mono+'>'+pmF(l[1],0)+'</td><td '+mono+'>'+pmF(l[1]/s.cost*100,0)+'</td></tr>'});
+  h+='<tr style="border-top:1px solid var(--border);font-weight:700"><td style="padding:8px">Savikaina</td><td '+mono+'>'+pmF(s.costT,2)+'</td><td '+mono+'>'+pmF(s.cost,0)+'</td><td></td></tr>'
+    +'<tr><td style="padding:6px 8px">Pardavimo kaina / pajamos</td><td '+mono+'>'+pmF(pmc("sp"),2)+'</td><td '+mono+'>'+pmF(s.revenue,0)+'</td><td></td></tr>'
+    +'<tr style="font-weight:700"><td style="padding:8px">Pelnas / nuostolis</td><td '+mono.replace('">','color:'+pmCls(s.profitT)+'">')+'>'+pmF(s.profitT,2)+'</td><td '+mono.replace('">','color:'+pmCls(s.profit)+'">')+'>'+pmF(s.profit,0)+'</td><td></td></tr>'
+    +'</tbody></table></div></div>';
+  h+='<div class="sgr" style="margin-top:14px">'
+    +pmTile("Dujos",s.en.gas===null?"—":pmF(s.en.gas,0)+" m³")
+    +pmTile("Dujos €/val.",s.hrs>0?pmEur(s.gasE/s.hrs):"—")
+    +pmTile("Lauko T",s.outT===null?"—":pmF(s.outT,1)+"°")
+    +pmTile("Elektra",s.en.kwh===null?"—":pmF(s.en.kwh,0)+" kWh")
+    +pmTile("Nulinio pelno pralaidumas",s.breakEven===null?"nėra":pmF(s.breakEven,2)+" t/val.",s.breakEven!==null&&s.thr!==null?pmCls(s.thr-s.breakEven):null)
+    +'</div>';
+  h+='<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.78rem;color:var(--text-dim)"><label>Veikimo valandos (pataisymas):</label><input type="number" step="0.1" min="0" value="'+(s.hrsOv===null?"":s.hrsOv)+'" placeholder="auto '+pmF(s.hrsAuto,1)+'" onchange="pmSetHours(this.value)" style="width:110px;padding:6px 8px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--mono)"></div>';
+  h+='<div style="margin-top:10px;font-size:.7rem;color:var(--text-muted);line-height:1.6">'+s.notes.map(x=>"• "+x).join("<br>")+'<br>• Pagaminta = masės balansas (šviežia žaliava − atsijų siloso pokytis), kol nėra patikimų svarstyklių. Pajamos = pagaminta × pardavimo kaina (ne faktiniai pardavimai).</div></div>';
+  return h;
+}
+function rPmMonth(){
+  const months=[...new Set(pmDates().map(d=>d.slice(0,7)))].sort();
+  if(!S.pm.month||!months.includes(S.pm.month))S.pm.month=months[months.length-1];
+  const i=months.indexOf(S.pm.month);
+  const bt=(dir,l)=>{const j=i+dir;const ok=j>=0&&j<months.length;return'<button class="bt" style="width:44px"'+(ok?' onclick="S.pm.month=\''+months[j]+'\';R()"':' disabled style="width:44px;opacity:.4"')+'>'+l+'</button>'};
+  let h='<div style="display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:14px">'+bt(-1,"◀")+'<div style="font-family:var(--mono);font-weight:700;min-width:110px;text-align:center">'+S.pm.month+'</div>'+bt(1,"▶")+'</div>';
+  const list=pmDates().filter(d=>d.slice(0,7)===S.pm.month).map(pmCalc).filter(Boolean);
+  if(!list.length)return h+'<div class="card"><div class="es"><p>Šį mėnesį gamybos įrašų nėra</p></div></div>';
+  const T={P:0,hrs:0,cost:0,rev:0,gas:0,kwh:0,dU:0,dF:0};
+  list.forEach(s=>{T.P+=s.P;T.hrs+=s.hrs;T.cost+=s.cost;T.rev+=s.revenue;T.gas+=s.en.gas||0;T.kwh+=s.en.kwh||0;if(s.ds){T.dU+=s.ds.undT;T.dF+=s.ds.freshT}});
+  const prof=T.rev-T.cost,uM=T.dU+T.dF>0?T.dU/(T.dU+T.dF):null;
+  h+='<div class="card"><h2>📅 Mėnesio ataskaita <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">('+S.pm.month+')</span></h2><div class="sgr">'
+    +pmTile("Pagaminta",pmF(T.P,1)+" t")+pmTile("Veikimas",pmF(T.hrs,1)+" val.")+pmTile("Pralaidumas",pmF(T.hrs>0?T.P/T.hrs:null,2)+" t/val.")
+    +pmTile("Atsijų dalis",uM===null?"—":pmF(uM*100,0)+"%")+pmTile("Savikaina",pmEur(T.cost/T.P)+"/t")+pmTile("Pelnas €/t",pmEur(prof/T.P),pmCls(prof))
+    +pmTile("Pelnas / nuostolis",pmEur(prof,0),pmCls(prof))+'</div>';
+  const th='style="text-align:right;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border);white-space:nowrap"';
+  const mono='style="text-align:right;padding:5px 8px;font-family:var(--mono);font-size:.76rem;white-space:nowrap"';
+  h+='<div class="tw" style="margin-top:14px"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border)">Data</th><th '+th+'>Val.</th><th '+th+'>Gamyb., t</th><th '+th+'>u %</th><th '+th+'>Dujos m³</th><th '+th+'>Savik. €/t</th><th '+th+'>Pelnas €/t</th><th '+th+'>Pelnas €</th></tr></thead><tbody>';
+  list.forEach(s=>{
+    h+='<tr style="cursor:pointer" onclick="S.pm.date=\''+s.date+'\';S.pm.tab=\'shift\';R()"><td style="padding:5px 8px;font-family:var(--mono);font-size:.76rem">'+s.date.slice(5)+'</td><td '+mono+'>'+pmF(s.hrs,1)+'</td><td '+mono+'>'+pmF(s.P,1)+'</td><td '+mono+'>'+(s.u===null?"—":pmF(s.u*100,0))+'</td><td '+mono+'>'+(s.en.gas===null?"—":pmF(s.en.gas,0))+'</td><td '+mono+'>'+pmF(s.costT,1)+'</td><td '+mono.replace('">','color:'+pmCls(s.profitT)+'">')+'>'+pmF(s.profitT,1)+'</td><td '+mono.replace('">','color:'+pmCls(s.profit)+'">')+'>'+pmF(s.profit,0)+'</td></tr>';
+  });
+  h+='<tr style="border-top:1px solid var(--border);font-weight:700"><td style="padding:6px 8px">Viso</td><td '+mono+'>'+pmF(T.hrs,1)+'</td><td '+mono+'>'+pmF(T.P,1)+'</td><td '+mono+'>'+(uM===null?"—":pmF(uM*100,0))+'</td><td '+mono+'>'+pmF(T.gas,0)+'</td><td '+mono+'>'+pmF(T.cost/T.P,1)+'</td><td '+mono.replace('">','color:'+pmCls(prof)+'">')+'>'+pmF(prof/T.P,1)+'</td><td '+mono.replace('">','color:'+pmCls(prof)+'">')+'>'+pmF(prof,0)+'</td></tr>';
+  h+='</tbody></table></div></div><button class="bt" style="margin-top:12px" onclick="pmCsv()">⬇️ Eksportuoti CSV</button><div style="margin-top:10px;font-size:.7rem;color:var(--text-muted)">Spausk dieną, kad matytum visą pamainos ataskaitą. Pajamos = pagaminta × pardavimo kaina (ne faktiniai pardavimai).</div></div>';
+  return h;
+}
+function pmCsv(){
+  const list=pmDates().filter(d=>d.slice(0,7)===S.pm.month).map(pmCalc).filter(Boolean);
+  const f=(v,d)=>v===null||v===undefined||isNaN(v)?"":Number(v).toFixed(d).replace(".",",");
+  const rows=[["Data","Valandos","Pagaminta t","Atsiju dalis %","Dujos m3","Elektra kWh","Zaliava EUR","Risiklis EUR","Darbas EUR","Dujos EUR","Elektra EUR","Kitos EUR","Maisai EUR","Savikaina EUR","Savikaina EUR/t","Pajamos EUR","Pelnas EUR/t","Pelnas EUR"]];
+  list.forEach(s=>rows.push([s.date,f(s.hrs,2),f(s.P,2),s.u===null?"":f(s.u*100,1),f(s.en.gas,0),f(s.en.kwh,0)].concat(s.lines.map(l=>f(l[1],2))).concat([f(s.cost,2),f(s.costT,2),f(s.revenue,2),f(s.profitT,2),f(s.profit,2)])));
+  const csv="﻿"+rows.map(r=>r.join(";")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="kalk-v-pelnas-"+S.pm.month+".csv";document.body.appendChild(a);a.click();a.remove();
+}
+function rPmScen(){
+  const ds=pmDates().map(pmCalc).filter(Boolean),full=ds.filter(x=>x.hrs>=4),last=full.length?full[full.length-1]:ds[ds.length-1];
+  if(!last)return'<div class="card"><div class="es"><p>Nėra duomenų</p></div></div>';
+  const fit0=pmGasFit(),fit=fit0&&fit0.r2>=0.15?fit0:null;
+  const T=S.pm.scT!==null?S.pm.scT:(last.outT!==null?Math.round(last.outT):(S.oTemp!==null&&S.oTemp!==undefined?Math.round(S.oTemp):5));
+  const gasAuto=fit?fit.at(T):last.gasPerH;
+  const gasH=S.pm.scGas!==null?S.pm.scGas:gasAuto;
+  const kwhH=pmMed(ds.map(s=>s.kwhPerH).filter(x=>x!==null&&x>0))||last.kwhPerH||0;
+  const Fh=pmc("lm")/pmc("lh")+(gasH||0)*last.gp+kwhH*last.ep;
+  const s=Object.assign({},last);
+  const col=(v)=>{if(v===null)return'';return'background:'+(v>=0?'rgba(34,197,94,.14)':'rgba(239,68,68,.14)')+';color:'+(v>=0?'var(--ok)':'var(--danger)')};
+  const cellS='style="text-align:right;padding:6px 8px;font-family:var(--mono);font-size:.76rem;white-space:nowrap';
+  const thS='style="text-align:right;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border);white-space:nowrap"';
+  const us=[0.2,0.25,0.3,0.35,0.4,0.45,0.5];
+  let h='<div class="card"><h2>🧮 Scenarijai</h2><div class="fg">'
+    +'<div class="f"><label>Lauko temperatūra, °C</label><input type="number" step="1" value="'+T+'" onchange="S.pm.scT=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
+    +'<div class="f"><label>Dujos, m³/val.</label><input type="number" step="1" value="'+(S.pm.scGas!==null?S.pm.scGas:Math.round(gasAuto||0))+'" onchange="S.pm.scGas=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
+    +'<div class="f"><label>Fiksuota sąnauda, €/val.</label><input type="text" readonly value="'+pmF(Fh,1)+'"></div></div>';
+  h+='<div style="margin-top:8px;font-size:.72rem;color:var(--text-muted);line-height:1.6">'
+    +(fit?'Dujos pagal temperatūrą: '+fit.n+' pamainų regresija, ≈ '+pmF(fit.at(T),0)+' m³/val. prie '+T+' °C (kiekvienas °C šalčiau ≈ '+pmF(-fit.b,1)+' m³/val., R² '+pmF(fit.r2,2)+').':'Patikimos dujų–temperatūros priklausomybės dar nėra (reikia ≥ 4 pamainų su valandiniu „Energija“ žurnalu) – dujos imamos iš paskutinės pamainos ('+last.date+').')
+    +' Fiksuota sąnauda = darbas + dujos + elektra už veikimo valandą (nepriklauso nuo pralaidumo).</div>';
+  h+='<div class="sgrp-t" style="margin-top:16px">Pelnas €/t pagal gatavo produkto pralaidumą (t/val.) ir atsijų dalį</div>';
+  const cols=[3.5,4,4.5,5,5.5,6];
+  const lt=last.thr!==null?Math.round(last.thr*100)/100:null;
+  if(lt!==null){for(let i=cols.length-1;i>=0;i--)if(Math.abs(cols[i]-lt)<0.12)cols.splice(i,1);cols.push(lt)}
+  cols.sort((a,b)=>a-b);
+  h+='<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">u \\ t/val.</th>'+cols.map(c=>'<th '+thS+'>'+pmF(c,2)+(last.thr!==null&&Math.abs(c-last.thr)<0.006?' ●':'')+'</th>').join('')+'</tr></thead><tbody>';
+  us.forEach(u=>{h+='<tr><td style="padding:6px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%</td>'+cols.map(c=>{const v=pmProfitAt(u,c,Fh,s);return'<td '+cellS+';'+col(v)+'">'+pmF(v,1)+'</td>'}).join('')+'</tr>'});
+  h+='</tbody></table></div></div>';
+  h+='<div class="sgrp-t" style="margin-top:16px">Nulinio pelno pralaidumas, t/val.</div><div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr>'+us.map(u=>'<th '+thS+'>u '+pmF(u*100,0)+'%</th>').join('')+'</tr></thead><tbody><tr>'+us.map(u=>{const v=pmBreakAt(u,Fh,s);return'<td '+cellS+'">'+(v===null?'nėra':pmF(v,2))+'</td>'}).join('')+'</tr></tbody></table></div></div>';
+  h+='<div class="sgrp-t" style="margin-top:16px">Kai apdorojamos masės greitis P fiksuotas: gatavas produktas = P × (1 − u)</div>';
+  const Ps=[6,6.5,7,7.5];
+  if(last.thr!==null&&last.u!==null){const p0=Math.round(last.thr/(1-last.u)*100)/100;for(let i=Ps.length-1;i>=0;i--)if(Math.abs(Ps[i]-p0)<0.12)Ps.splice(i,1);Ps.push(p0)}
+  Ps.sort((a,b)=>a-b);
+  h+='<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">u \\ P, t/val.</th>'+Ps.map(p=>'<th '+thS+'>'+pmF(p,2)+'</th>').join('')+'</tr></thead><tbody>';
+  us.forEach(u=>{h+='<tr><td style="padding:6px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%</td>'+Ps.map(p=>{const v=pmProfitAt(u,p*(1-u),Fh,s);return'<td '+cellS+';'+col(v)+'">'+pmF(v,1)+'</td>'}).join('')+'</tr>'});
+  h+='</tbody></table></div></div><div style="margin-top:10px;font-size:.7rem;color:var(--text-muted);line-height:1.6">Modelis: pelnas €/t = pardavimo kaina − (žaliava + kitos + maišai + rišiklis/(1 − u) + fiksuota sąnauda / pralaidumas). Kainos keičiamos skiltyje „Nust.“. ● – paskutinės pamainos faktinis pralaidumas.</div></div>';
+  return h;
+}
+function rProfit(){
+  if(!S.entries.length)return'<div class="card"><div class="es"><p>Nėra duomenų</p></div></div>';
+  const ds=pmDates().filter(d=>pmCalc(d));
+  if(!S.pm.date||pmDates().indexOf(S.pm.date)<0)S.pm.date=ds.length?ds[ds.length-1]:pmDates()[pmDates().length-1];
+  if(!S.pm.month)S.pm.month=S.pm.date.slice(0,7);
+  let h=pmTabs();
+  if(S.pm.tab==="month")h+=rPmMonth();else if(S.pm.tab==="scen")h+=rPmScen();else h+=rPmShift();
+  return h;
+}
+function rPmCfg(){
+  let h='<div class="card"><h2>💶 Pelno modelis</h2><div class="fg">';
+  Object.keys(PM_LBL).forEach(k=>{h+='<div class="f"><label>'+PM_LBL[k][0]+', '+PM_LBL[k][1]+'</label><input type="number" step="any" id="pm_'+k+'" value="'+pmc(k)+'"></div>'});
+  h+='</div><div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;line-height:1.6">Pelno skirtukas naudoja šias kainas ir normas (kaip Excel „Pradiniai“). „Tuščios eigos dujų riba“ – kiek dujų per valandą laikoma įšilimu ar atvėsimu prieš/po darbo pamainos.</div><button class="bss" onclick="sCfg()">💾 Išsaugoti</button></div>';
+  return h;
+}
 
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-20a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-24a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
   h+='<button class="'+(S.view==="analysis"?"active":"")+'" onclick="S.view=\'analysis\';R()">\uD83D\uDD0E Analiz\u0117</button>';
   h+='<button class="'+(S.view==="check"?"active":"")+'" onclick="S.view=\'check\';R()">\u2705 Patikra</button>';
+  h+='<button class="'+(S.view==="profit"?"active":"")+'" onclick="S.view=\'profit\';R()">\uD83D\uDCB6 Pelnas</button>';
   h+='<button class="'+(S.view==="settings"?"active":"")+'" onclick="S.view=\'settings\';R()">\u2699\uFE0F Nust.</button></div>';
   if(S.view==="form")h+=rForm();
   if(S.view==="table")h+=rTable();
   if(S.view==="charts")h+=rCharts();
   if(S.view==="analysis")h+=rAnalysis();
   if(S.view==="check")h+=rCheck();
-  if(S.view==="settings")h+=rCfg();
+  if(S.view==="profit")h+=rProfit();
+  if(S.view==="settings")h+=rCfg()+rPmCfg();
   a.innerHTML=h+"</div>";
   if(S.view==="charts")setTimeout(drawCharts,50);
   if(S.view==="analysis")setTimeout(drawAnalysisChart,50);
