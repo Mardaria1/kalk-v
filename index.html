@@ -1427,6 +1427,25 @@ function rPmShift(){
     +pmTile("Elektra",s.en.kwh===null?"—":pmF(s.en.kwh,0)+" kWh")
     +pmTile("Nulinio pelno pralaidumas",s.breakEven===null?"nėra":pmF(s.breakEven,2)+" t/val.",s.breakEven!==null&&s.thr!==null?pmCls(s.thr-s.breakEven):null)
     +'</div>';
+  if(s.Fh!==null){
+    const us=[0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5];
+    if(s.u!==null&&!us.some(x=>Math.abs(x-s.u)<0.015)){us.push(Math.round(s.u*100)/100);us.sort((x,y)=>x-y)}
+    const th='style="text-align:right;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border);white-space:nowrap"';
+    const td='style="text-align:right;padding:5px 8px;font-family:var(--mono);font-size:.76rem;white-space:nowrap';
+    const P0=s.thr!==null&&s.u!==null?s.thr/(1-s.u):null;
+    const thAt=u=>P0===null?null:P0*(1-u);
+    let uMax=null;
+    if(P0!==null){for(let u=0.6;u>=0;u-=0.005){if(pmProfitAt(u,thAt(u),s.Fh,s)>=0){uMax=u;break}}}
+    h+='<div class="sgrp-t" style="margin-top:16px">Kaip keičiasi pelnas, jei sumažinsime atsijų dalį receptūroje</div>'
+      +'<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6">Prielaida: granuliatorius apdoroja tą pačią masę '+(P0===null?'—':pmF(P0,2))+' t/val. (kalkės + atsijos). Mažiau atsijų – daugiau gatavo produkto: pralaidumas = '+(P0===null?'P':pmF(P0,2))+' × (1 − atsijų dalis). Fiksuota sąnauda '+pmF(s.Fh,0)+' €/val. (darbas + dujos '+(s.gasPerH===null?"":pmF(s.gasPerH,0)+" m³/val. ")+'+ elektra).'
+      +(uMax!==null?' <b style="color:var(--text)">Be nuostolio, kol atsijų dalis ≤ '+pmF(uMax*100,0)+'%.</b>':' <b style="color:var(--danger)">Net be atsijų pamaina būtų nuostolinga.</b>')+'</div>'
+      +'<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border)">Atsijų dalis</th><th '+th+'>Gatavo t/val.</th><th '+th+'>Reikia t/val.</th><th '+th+'>Pelnas €/t</th></tr></thead><tbody>';
+    us.forEach(u=>{
+      const be=pmBreakAt(u,s.Fh,s),t=thAt(u),pf=t!==null?pmProfitAt(u,t,s.Fh,s):null,cur=s.u!==null&&Math.abs(u-s.u)<0.0151;
+      h+='<tr'+(cur?' style="background:rgba(59,130,246,.12)"':'')+'><td style="padding:5px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%'+(cur?' ●':'')+'</td><td '+td+'">'+(t===null?'—':pmF(t,2))+'</td><td '+td+'">'+(be===null?'nėra':pmF(be,2))+'</td><td '+td+';color:'+(pf===null?'inherit':pmCls(pf))+'">'+(pf===null?'—':pmF(pf,1))+'</td></tr>';
+    });
+    h+='</tbody></table></div></div><div style="font-size:.7rem;color:var(--text-muted);margin-top:6px;line-height:1.6">● – faktinė atsijų dalis. Tai prielaida, kad P (apdorojamos masės greitis) nuo receptūros nesikeičia; jei granuliatorius ar kėlimas realiai apdoroja mažiau, efektas bus mažesnis. Taip pat žiūrėkite, ar atsijų silosas nepersipildo, kai receptūroje jų imama mažiau nei susidaro.</div>';
+  }
   h+='<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.78rem;color:var(--text-dim)"><label>Veikimo valandos (pataisymas):</label><input type="number" step="0.1" min="0" value="'+(s.hrsOv===null?"":s.hrsOv)+'" placeholder="auto '+pmF(s.hrsAuto,1)+'" onchange="pmSetHours(this.value)" style="width:110px;padding:6px 8px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:var(--mono)"></div>';
   h+='<div style="margin-top:10px;font-size:.7rem;color:var(--text-muted);line-height:1.6">'+s.notes.map(x=>"• "+x).join("<br>")+'<br>• Pagaminta = masės balansas (šviežia žaliava − atsijų siloso pokytis), kol nėra patikimų svarstyklių. Pajamos = pagaminta × pardavimo kaina (ne faktiniai pardavimai).</div></div>';
   return h;
@@ -1525,7 +1544,7 @@ function rPmCfg(){
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-10-25a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-06b</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
