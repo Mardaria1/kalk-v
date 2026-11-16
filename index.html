@@ -333,7 +333,7 @@ function calcSummary(fi){
     const exh=parseFloat(e.dryerExhaustTemp);if(!isNaN(exh)){sumExh+=exh;cntExh++}
     const hum=parseFloat(e.outdoorHumidity);if(!isNaN(hum)){sumHum+=hum;cntHum++}
     const qty=parseFloat(e.quantity)||0;const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
-    if(prev&&e.date&&prev.date&&e.hour&&prev.hour&&prev.date===e.date){var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)totalMins+=m}}});
+    totalMins+=rowMins(e,prev)});
   // 2026-10-20: atsij\u0173 silosas 31.00, masi\u0173 balansas ir 8000RT01 svarstykl\u0117s
   let tFresh=0,cntFresh=0,sumU=0,cntU=0,tScale=0,cntScale=0,tScaleSta=0,cntScaleSta=0,lastLvl=null;
   fi.forEach(e=>{
@@ -761,10 +761,7 @@ function rHourlyDay(fi,sm){
   rows.forEach(function(e){
     var i=sm.imap.get(e),prev=i>0?S.entries[i-1]:null;
     var qty=parseFloat(e.quantity)||0,tph=null;
-    if(prev&&prev.date===e.date&&e.hour&&prev.hour){
-      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
-      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)tph=qty/(m/60)}
-    }
+    {var m=rowMins(e,prev);if(m>0)tph=qty/(m/60)}
     var rpmVal=parseFloat(e.granRpm);
     var idle=!isNaN(rpmVal)&&rpmVal<MIN_RUNNING_RPM;
     h+='<tr'+(idle?' style="opacity:.5"':'')+'>';
@@ -932,6 +929,16 @@ function drawCharts(){
 
 // ── Parametrų analizė ──
 const MIN_RUNNING_RPM=1; // po sio slenkscio - laikoma, kad irenginys stovi (inercija/dulkiu nusedimas, ne realus derinys)
+// 2026-11-16: irasu trukme minutemis. Kiekvienas irasas = 1 valanda; jei pries ji tos pacios dienos irasas (iki 3 val. tarpas) - imamas tikras tarpas,
+// jei ne (pirmas dienos irasas, nera pradines 0 eilutes) - laikoma 60 min., kai kiekis > 0.
+function rowMins(e,prev){
+  const qty=parseFloat(e&&e.quantity)||0;
+  if(prev&&prev.date===e.date&&e.hour&&prev.hour){
+    const d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
+    if(!isNaN(d1)&&!isNaN(d2)){const m=Math.round((d2-d1)/60000);if(m>0&&m<=180)return m}
+  }
+  return qty>0?60:0;
+}
 function dayAgg(fi,allEntries){
   const imap=new Map();allEntries.forEach((e,i)=>imap.set(e,i));
   const days={};
@@ -940,10 +947,7 @@ function dayAgg(fi,allEntries){
     const day=days[e.date];
     const i=imap.get(e),prev=i>0?allEntries[i-1]:null;
     day.qty+=parseFloat(e.quantity)||0;
-    if(prev&&prev.date===e.date&&e.hour&&prev.hour){
-      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
-      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)day.mins+=m}
-    }
+    day.mins+=rowMins(e,prev);
     const rpmVal=parseFloat(e.granRpm);
     const isIdle=!isNaN(rpmVal)&&rpmVal<MIN_RUNNING_RPM;
     if(!isIdle){
@@ -975,10 +979,7 @@ function getAnalysisSeries(fi){
       const i=imap.get(e),prev=i>0?S.entries[i-1]:null;
       const qty=parseFloat(e.quantity)||0;
       let tph=null;
-      if(prev&&prev.date===e.date&&e.hour&&prev.hour){
-        var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
-        if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)tph=qty/(m/60)}
-      }
+      {var m=rowMins(e,prev);if(m>0)tph=qty/(m/60)}
       return{label:e.hour||"\u2014",rpm:e.granRpm,feed:e.feedRpm,water:e.waterFlow,weir:e.weirHeight,binder:e.binderDose,outT:e.outdoorTemp,outHum:e.outdoorHumidity,tph};
     });
     return{series,hourly:true};
@@ -1072,11 +1073,7 @@ function buildPeriods(entries){
   entries.forEach((e,i)=>{
     const prev=i>0?entries[i-1]:null;
     const qty=parseFloat(e.quantity)||0;
-    let mins=0;
-    if(prev&&e.hour&&prev.hour){
-      var d1=new Date(prev.date+"T"+prev.hour),d2=new Date(e.date+"T"+e.hour);
-      if(!isNaN(d1)&&!isNaN(d2)){var m=Math.round((d2-d1)/60000);if(m>0)mins=m}
-    }
+    let mins=rowMins(e,prev);
     const key=e.granRpm+"|"+e.feedRpm+"|"+e.waterFlow+"|"+e.weirHeight+"|"+e.binderDose;
     if(!cur||cur.key!==key){
       if(cur)periods.push(cur);
@@ -1544,7 +1541,7 @@ function rPmCfg(){
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-11a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-16a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
