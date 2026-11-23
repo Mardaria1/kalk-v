@@ -286,9 +286,30 @@ function timeDelta(e1,e2){
   return h>0?(h+"h "+pd(m)+"m"):(m+"m");
 }
 function elReading(e){if(e.elektra!==""&&e.elektra!=null)return parseFloat(e.elektra);var t=0,has=false;EL.forEach(function(m){var v=parseFloat(e["el"+m]);if(!isNaN(v)){t+=v;has=true}});return has?t:0}
+// 2026-11-23: pirmas dienos įrašas gauna įšilimo dujas, paskutinis – aušimo dujas iš valandinio lapo „Energija“
+// (kaip skiltyje „Pelnas“). Jei „Energija“ duomenų nėra – senas būdas (pirmas 0, paskutiniam pridedamas tarpas iki kito įrašo).
+function gasEnWarm(e){
+  try{const M=pmEnergyMap();if(!M||!M.size)return null;const thr=pmc("gi")||5,ts=pmTs(e.date,e.hour),cur=M.get(ts);
+    if(!cur||cur.gas===null)return null;let b=ts-PM_H,n=0;if(!M.has(b)||M.get(b).gas===null)return null;
+    while(n<4){const c=M.get(b),pv=M.get(b-PM_H);if(!c||!pv||c.gas===null||pv.gas===null)break;if(c.gas-pv.gas>thr){b-=PM_H;n++}else break}
+    const g=cur.gas-M.get(b).gas;return g>=0?g:null}catch(x){return null}
+}
+function gasEnCool(e){
+  try{const M=pmEnergyMap();if(!M||!M.size)return null;const thr=pmc("gi")||5,ts=pmTs(e.date,e.hour),cur=M.get(ts);
+    if(!cur||cur.gas===null)return null;let t=ts,n=0;
+    while(n<4){const c=M.get(t),nx=M.get(t+PM_H);if(!c||!nx||c.gas===null||nx.gas===null)break;if(nx.gas-c.gas>thr){t+=PM_H;n++}else break}
+    const g=M.get(t).gas-cur.gas;return g>=0?g:null}catch(x){return null}
+}
 function gasReadingDelta(e,prev,next){
-  let d=(prev&&prev.date===e.date)?df(e.gasMeter,prev.gasMeter):0;
-  if(next&&next.date!==e.date){const carry=df(next.gasMeter,e.gasMeter);if(carry!==null)d=(d===null?0:d)+carry}
+  const first=!(prev&&prev.date===e.date),last=!(next&&next.date===e.date);
+  let d;
+  if(!first)d=df(e.gasMeter,prev.gasMeter);
+  else{const w=gasEnWarm(e);d=w!==null?w:0}
+  if(last){
+    const c=gasEnCool(e);
+    if(c!==null)d=(d===null?0:d)+c;
+    else if(next){const carry=df(next.gasMeter,e.gasMeter);if(carry!==null)d=(d===null?0:d)+carry}
+  }
   return d;
 }
 function elReadingDelta(e,prev,next){
@@ -328,7 +349,7 @@ function calcSummary(fi){
   fi.forEach(e=>{const i=imap.get(e),prev=i>0?S.entries[i-1]:null,next=i<S.entries.length-1?S.entries[i+1]:null;const qty=parseFloat(e.quantity)||0;
     const epG=(e.gasPrice!==""&&e.gasPrice!=null&&!isNaN(parseFloat(e.gasPrice)))?parseFloat(e.gasPrice):S.cfg.gp;
     const epE=(e.elPrice!==""&&e.elPrice!=null&&!isNaN(parseFloat(e.elPrice)))?parseFloat(e.elPrice):S.cfg.ep;
-    if(prev&&qty>0){const g=gasReadingDelta(e,prev,next);if(g!==null){tG+=g;gC+=g*epG}
+    if(qty>0){const g=gasReadingDelta(e,prev,next);if(g!==null){tG+=g;gC+=g*epG}
       const ed=elReadingDelta(e,prev,next);if(ed!==null){tE+=ed;eC+=ed*epE}}});
   let gP=S.cfg.gp,eP=S.cfg.ep;
   for(let i=fi.length-1;i>=0;i--){if(fi[i].gasPrice){gP=parseFloat(fi[i].gasPrice)||gP;eP=parseFloat(fi[i].elPrice)||eP;break}}
@@ -1578,7 +1599,7 @@ function rPmCfg(){
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-19a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-23a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
