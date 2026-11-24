@@ -1408,6 +1408,7 @@ function pmCalc0(date){
   const cost=lines.reduce((s,l)=>s+l[1],0),revenue=pmc("sp")*P;
   const Fh=hrs>0?(labor+gasE+elE)/hrs:null,V=pmc("rm")+pmc("ot")+pmc("bgp")*pmc("bgt"),b=pmc("bp")*binderPct/100;
   const den=pmc("sp")-V-b/(1-(u===null?0:u));
+  const M=hrs>0?P/hrs/(1-(u===null?0.45:u)):null; // perdirbamos masės greitis, t/val.
   const notes=[];
   if(en.src==="skaitikliai")notes.push("Dujos pagal skaitiklių skirtumą (valandinio „Energija“ žurnalo šiai dienai dar nėra) – įšilimas ir atvėsimas gali būti priskirti kitai dienai.");
   else notes.push("Dujų langas: įšilimas "+en.warm+" val. + darbas + atvėsimas "+en.cool+" val.");
@@ -1415,25 +1416,54 @@ function pmCalc0(date){
   if(!ds)notes.push("Dozavimo duomenų šiai dienai nėra – rišiklis ir atsijų dalis įvertinti (u 45 %).");
   if(ov===null&&rows.filter(pmIsRun).length>=3)notes.push("Veikimo valandos įvertintos pagal pirmos ir paskutinės eilutės kiekį; galima pataisyti ranka.");
   return{date:date,P:P,hrs:hrs,hrsAuto:auto,hrsOv:ov,thr:hrs>0?P/hrs:null,u:u,en:en,gasE:gasE,elE:elE,labor:labor,labHrs:labHrs,lines:lines,cost:cost,revenue:revenue,
-    costT:cost/P,profitT:(revenue-cost)/P,profit:revenue-cost,Fh:Fh,V:V,b:b,binderPct:binderPct,breakEven:(den>0&&Fh!==null)?Fh/den:null,
+    costT:cost/P,profitT:(revenue-cost)/P,profit:revenue-cost,Fh:Fh,V:V,b:b,binderPct:binderPct,breakEven:(den>0&&Fh!==null)?Fh/den:null,M:M,labH:hrs>0?labor/hrs:null,elH:hrs>0?elE/hrs:null,
     outT:outT,gasPerH:hrs>0&&en.gas!==null?en.gas/hrs:null,kwhPerH:hrs>0&&en.kwh!==null?en.kwh/hrs:null,gp:gp,ep:ep,notes:notes,ds:ds};
 }
 
-// Dujų sąnaudos val. priklausomybė nuo lauko temperatūros (tiesinė regresija per ankstesnes pamainas)
-function pmGasFit(){
+// ── Dujų modelis (2026-11-24) ──
+// Dujos daugiausia proporcingos perdirbamai masei M (išgarinamas vanduo), o ne laikui:
+//   dujos Nm³/val. = a + g·M + c·T   (M – perdirbama t/val. = produktas/(1−u), T – lauko °C)
+// Koeficientai – regresija per pamainas (≥ 6, ≥ 4 val., žinomas u ir T). Jei regresija nepatikima –
+// pastovi dalis = PM_GFIX (numatyta 10 %) nuo pamainos dujų, likusi dalis – kintama, proporcinga M.
+const PM_CAP=7; // perdirbamos masės maksimumas, t/val. (100 % padavimo = 7 t/val. mišinio)
+function pmGFix(){try{const v=parseFloat(localStorage.getItem("pm_gfix"));return isNaN(v)?0.10:Math.min(0.9,Math.max(0,v/100))}catch(x){return 0.10}}
+function pmGasModel(){
+  const key=S.entries.length+"|"+(S.energy||[]).length+"|"+(S.dosing||[]).length;
+  if(S._gmKey===key)return S._gm;
   const pts=[];
-  pmDates().forEach(d=>{const s=pmCalc(d);if(s&&s.hrs>=4&&s.outT!==null&&s.gasPerH>0)pts.push([s.outT,s.gasPerH])});
-  if(pts.length<4)return null;
-  const n=pts.length,mx=pts.reduce((a,p)=>a+p[0],0)/n,my=pts.reduce((a,p)=>a+p[1],0)/n;
-  let sxy=0,sxx=0,syy=0;pts.forEach(p=>{sxy+=(p[0]-mx)*(p[1]-my);sxx+=(p[0]-mx)**2;syy+=(p[1]-my)**2});
-  if(sxx<1)return null;
-  const b=sxy/sxx,a=my-b*mx;
-  return{a:a,b:b,n:n,r2:syy>0?sxy*sxy/(sxx*syy):0,at:t=>Math.max(0,a+b*t)};
+  pmDates().forEach(d=>{const s=pmCalc(d);if(s&&s.hrs>=4&&s.u!==null&&s.outT!==null&&s.gasPerH>0&&s.M>0)pts.push([s.M,s.outT,s.gasPerH])});
+  let m=null;
+  if(pts.length>=6){
+    const n=pts.length,X=pts.map(q=>[1,q[0],q[1]]),Y=pts.map(q=>q[2]);
+    const A=[[0,0,0],[0,0,0],[0,0,0]],B=[0,0,0];
+    X.forEach((x,i)=>{for(let r=0;r<3;r++){B[r]+=x[r]*Y[i];for(let c=0;c<3;c++)A[r][c]+=x[r]*x[c]}});
+    const det=M3=>M3[0][0]*(M3[1][1]*M3[2][2]-M3[1][2]*M3[2][1])-M3[0][1]*(M3[1][0]*M3[2][2]-M3[1][2]*M3[2][0])+M3[0][2]*(M3[1][0]*M3[2][1]-M3[1][1]*M3[2][0]);
+    const D=det(A);
+    if(Math.abs(D)>1e-6){
+      const sol=[0,1,2].map(k=>det(A.map((r,i)=>r.map((v,j)=>j===k?B[i]:v)))/D);
+      const my=Y.reduce((a,b)=>a+b,0)/n;let ss=0,sr=0;
+      X.forEach((x,i)=>{const f=sol[0]+sol[1]*x[1]+sol[2]*x[2];ss+=(Y[i]-my)**2;sr+=(Y[i]-f)**2});
+      const r2=ss>0?1-sr/ss:0;
+      if(sol[1]>0&&r2>=0.3)m={src:"regresija",a:sol[0],g:sol[1],c:sol[2],n:n,r2:r2};
+    }
+  }
+  S._gmKey=key;S._gm=m;return m;
 }
-// Pelnas €/t, kai pralaidumas (gatavo produkto t/h) ir atsijų dalis žinomi
-function pmProfitAt(u,thr,Fh,s){return pmc("sp")-(s.V+s.b/(1-u)+Fh/thr)}
-function pmBreakAt(u,Fh,s){const den=pmc("sp")-s.V-s.b/(1-u);return den>0?Fh/den:null}
-
+// Dujų padalijimas pamainai: pastovi dalis €/val. (Gf) ir kintama €/perdirbamą t (gv)
+function pmGasSplit(s,T){
+  const G=s.hrs>0?s.gasE/s.hrs:0,mdl=pmGasModel(),gp=s.gp;
+  let fixNm3=null,src;
+  if(mdl&&s.gasPerH>0&&T!==null){fixNm3=Math.max(0,Math.min(s.gasPerH,mdl.a+mdl.c*T));src="regresija"}
+  const Gf=fixNm3!==null?fixNm3*gp:pmGFix()*G;
+  const gv=s.M>0?(G-Gf)/s.M:0;
+  return{Gf:Gf,gv:gv,src:fixNm3!==null?src:"dalis",mdl:mdl};
+}
+// Pelnas €/t: kintamos (žaliava, kitos, maišai, rišiklis ir dujos – pagal perdirbamą masę) + pastovios €/val. ÷ pralaidumas
+function pmProfitAt(u,thr,Fh,s){return pmc("sp")-(s.V+(s.b+(s.gv||0))/(1-u)+Fh/thr)}
+function pmBreakAt(u,Fh,s){const den=pmc("sp")-s.V-(s.b+(s.gv||0))/(1-u);return den>0?Fh/den:null}
+// Atsijų dalis, iki kurios nulinio pelno pralaidumas dar pasiekiamas (P = PM_CAP)
+function pmUReach(Fh,s,cap){for(let u=0.6;u>=0;u-=0.005){const be=pmBreakAt(u,Fh,s);if(be!==null&&be<=cap*(1-u))return u}return null}
+function pmBeTxt(be,u,cap){if(be===null)return"nepasiekiama";const mx=cap*(1-u);return be>mx?"nepasiekiama ("+pmF(be,1)+")":pmF(be,2)}
 // ── UI ──
 function pmCls(v){return v>=0?"var(--ok)":"var(--danger)"}
 function pmTile(l,v,c){return'<div class="stt"><span class="sl">'+l+'</span><span class="sv"'+(c?' style="color:'+c+'"':'')+'>'+v+'</span></div>'}
@@ -1451,6 +1481,8 @@ function rPmShift(){
   const s=pmCalc(S.pm.date);
   let h=pmNavShift(S.pm.date);
   if(!s)return h+'<div class="card"><div class="es"><p>Šią dieną gamybos įrašų nėra</p></div></div>';
+  const gsp=pmGasSplit(s,s.outT);s.gv=gsp.gv;s.Gf=gsp.Gf;
+  if(s.hrs>0){s.Fh=(s.labH||0)+gsp.Gf+(s.elH||0);s.breakEven=s.u!==null?pmBreakAt(s.u,s.Fh,s):null}
   h+='<div class="card"><h2>💶 Pamainos pelnas <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">('+s.date+')</span></h2>';
   h+='<div class="sgr">'
     +pmTile("Pagaminta",pmF(s.P,1)+" t")
@@ -1480,7 +1512,9 @@ function rPmShift(){
     +(S.gas&&S.gas.next?pmTile("Kito mėn. dujų kaina",(S.gas.next.src.indexOf("prognoz")>=0?"~":"")+pmF(pM3(S.gas.next.nm3),3)+" €/m³"):"")
     +pmTile("Lauko T",s.outT===null?"—":pmF(s.outT,1)+"°")
     +pmTile("Elektra",s.en.kwh===null?"—":pmF(s.en.kwh,0)+" kWh")
-    +pmTile("Nulinio pelno pralaidumas",s.breakEven===null?"nėra":pmF(s.breakEven,2)+" t/val.",s.breakEven!==null&&s.thr!==null?pmCls(s.thr-s.breakEven):null)
+    +pmTile("Nulinio pelno pralaidumas",s.u===null?"—":(s.breakEven!==null&&s.breakEven<=PM_CAP*(1-s.u)?pmF(s.breakEven,2)+" t/val.":"nepasiekiama"),s.breakEven!==null&&s.thr!==null?pmCls(s.thr-s.breakEven):"var(--danger)")
+    +pmTile("Dujos kintamai",s.M>0?pmF(toM3(s.gv/s.gp),1)+" m³/perdirb. t":"—")
+    +pmTile("Dujos pastoviai",pmF(toM3(s.Gf/s.gp),0)+" m³/val.")
     +'</div>';
   if(s.Fh!==null){
     const us=[0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5];
@@ -1488,16 +1522,17 @@ function rPmShift(){
     const th='style="text-align:right;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border);white-space:nowrap"';
     const td='style="text-align:right;padding:5px 8px;font-family:var(--mono);font-size:.76rem;white-space:nowrap';
     const P0=s.thr!==null&&s.u!==null?s.thr/(1-s.u):null;
+    const uR=pmUReach(s.Fh,s,PM_CAP);
     const thAt=u=>P0===null?null:P0*(1-u);
     let uMax=null;
     if(P0!==null){for(let u=0.6;u>=0;u-=0.005){if(pmProfitAt(u,thAt(u),s.Fh,s)>=0){uMax=u;break}}}
     h+='<div class="sgrp-t" style="margin-top:16px">Kaip keičiasi pelnas, jei sumažinsime atsijų dalį receptūroje</div>'
-      +'<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6">Prielaida: granuliatorius apdoroja tą pačią masę '+(P0===null?'—':pmF(P0,2))+' t/val. (kalkės + atsijos). Mažiau atsijų – daugiau gatavo produkto: pralaidumas = '+(P0===null?'P':pmF(P0,2))+' × (1 − atsijų dalis). Fiksuota sąnauda '+pmF(s.Fh,0)+' €/val. (darbas + dujos '+(s.gasPerH===null?"":pmF(s.gasPerH,0)+" m³/val. ")+'+ elektra).'
+      +'<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6">Prielaida: granuliatorius apdoroja tą pačią masę '+(P0===null?'—':pmF(P0,2))+' t/val. (kalkės + atsijos). Mažiau atsijų – daugiau gatavo produkto: pralaidumas = '+(P0===null?'P':pmF(P0,2))+' × (1 − atsijų dalis). Pastovi sąnauda '+pmF(s.Fh,0)+' €/val. (darbas + pastovi dujų dalis '+pmF(toM3(s.Gf/s.gp),0)+' m³/val. + elektra). Dujos kintamai: '+pmF(toM3(s.gv/s.gp),1)+' m³ perdirbamai tonai – mažiau atsijų, mažiau dujų tonai produkto ('+(gsp.src==="regresija"?'regresija per '+gsp.mdl.n+' pamainas, R² '+pmF(gsp.mdl.r2,2):'pastovi dalis '+pmF(pmGFix()*100,0)+' %, kol regresijai trūksta pamainų')+').'+(uR!==null?' Nulinio pelno pralaidumas pasiekiamas, kai atsijų ≤ '+pmF(uR*100,0)+'% (prie P = '+PM_CAP+' t/val.).':'')
       +(uMax!==null?' <b style="color:var(--text)">Be nuostolio, kol atsijų dalis ≤ '+pmF(uMax*100,0)+'%.</b>':' <b style="color:var(--danger)">Net be atsijų pamaina būtų nuostolinga.</b>')+'</div>'
       +'<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.68rem;border-bottom:1px solid var(--border)">Atsijų dalis</th><th '+th+'>Gatavo t/val.</th><th '+th+'>Reikia t/val.</th><th '+th+'>Pelnas €/t</th></tr></thead><tbody>';
     us.forEach(u=>{
       const be=pmBreakAt(u,s.Fh,s),t=thAt(u),pf=t!==null?pmProfitAt(u,t,s.Fh,s):null,cur=s.u!==null&&Math.abs(u-s.u)<0.0151;
-      h+='<tr'+(cur?' style="background:rgba(59,130,246,.12)"':'')+'><td style="padding:5px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%'+(cur?' ●':'')+'</td><td '+td+'">'+(t===null?'—':pmF(t,2))+'</td><td '+td+'">'+(be===null?'nėra':pmF(be,2))+'</td><td '+td+';color:'+(pf===null?'inherit':pmCls(pf))+'">'+(pf===null?'—':pmF(pf,1))+'</td></tr>';
+      h+='<tr'+(cur?' style="background:rgba(59,130,246,.12)"':'')+'><td style="padding:5px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%'+(cur?' ●':'')+'</td><td '+td+'">'+(t===null?'—':pmF(t,2))+'</td><td '+td+'">'+pmBeTxt(be,u,PM_CAP)+'</td><td '+td+';color:'+(pf===null?'inherit':pmCls(pf))+'">'+(pf===null?'—':pmF(pf,1))+'</td></tr>';
     });
     h+='</tbody></table></div></div><div style="font-size:.7rem;color:var(--text-muted);margin-top:6px;line-height:1.6">● – faktinė atsijų dalis. Tai prielaida, kad P (apdorojamos masės greitis) nuo receptūros nesikeičia; jei granuliatorius ar kėlimas realiai apdoroja mažiau, efektas bus mažesnis. Taip pat žiūrėkite, ar atsijų silosas nepersipildo, kai receptūroje jų imama mažiau nei susidaro.</div>';
   }
@@ -1541,40 +1576,47 @@ function pmCsv(){
 function rPmScen(){
   const ds=pmDates().map(pmCalc).filter(Boolean),full=ds.filter(x=>x.hrs>=4),last=full.length?full[full.length-1]:ds[ds.length-1];
   if(!last)return'<div class="card"><div class="es"><p>Nėra duomenų</p></div></div>';
-  const fit0=pmGasFit(),fit=fit0&&fit0.r2>=0.15?fit0:null;
+  const mdl=pmGasModel();
   const T=S.pm.scT!==null?S.pm.scT:(last.outT!==null?Math.round(last.outT):(S.oTemp!==null&&S.oTemp!==undefined?Math.round(S.oTemp):5));
-  const gasAuto=fit?fit.at(T):last.gasPerH;
-  const gasH=S.pm.scGas!==null?pM3(S.pm.scGas):gasAuto;
+  // dujų koeficientai (Nm³): kintama g – Nm³/perdirbamą t, pastovi f – Nm³/val. prie T
+  let gA,fA;
+  if(mdl){gA=mdl.g;fA=Math.max(0,mdl.a+mdl.c*T)}
+  else{const sp=pmGasSplit(last,last.outT);gA=last.gp>0?sp.gv/last.gp:0;fA=last.gp>0?sp.Gf/last.gp:0}
+  const gN=S.pm.scGv!=null?pM3(S.pm.scGv):gA,fN=S.pm.scGf!=null?pM3(S.pm.scGf):fA;
   const kwhH=pmMed(ds.map(s=>s.kwhPerH).filter(x=>x!==null&&x>0))||last.kwhPerH||0;
-  const Fh=pmc("lm")/pmc("lh")+(gasH||0)*last.gp+kwhH*last.ep;
-  const s=Object.assign({},last);s.V=pmc("rm")+pmc("ot")+pmc("bgp")*pmc("bgt");s.b=pmc("bp")*last.binderPct/100;
+  const Fh=pmc("lm")/pmc("lh")+fN*last.gp+kwhH*last.ep;
+  const s=Object.assign({},last);s.V=pmc("rm")+pmc("ot")+pmc("bgp")*pmc("bgt");s.b=pmc("bp")*last.binderPct/100;s.gv=gN*last.gp;
   const col=(v)=>{if(v===null)return'';return'background:'+(v>=0?'rgba(34,197,94,.14)':'rgba(239,68,68,.14)')+';color:'+(v>=0?'var(--ok)':'var(--danger)')};
   const cellS='style="text-align:right;padding:6px 8px;font-family:var(--mono);font-size:.76rem;white-space:nowrap';
   const thS='style="text-align:right;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border);white-space:nowrap"';
-  const us=[0.2,0.25,0.3,0.35,0.4,0.45,0.5];
+  const us=[0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5];
   let h='<div class="card"><h2>🧮 Scenarijai</h2><div class="fg">'
     +'<div class="f"><label>Lauko temperatūra, °C</label><input type="number" step="1" value="'+T+'" onchange="S.pm.scT=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
-    +'<div class="f"><label>Dujos, m³/val.</label><input type="number" step="1" value="'+(S.pm.scGas!==null?S.pm.scGas:Math.round(toM3(gasAuto||0)))+'" onchange="S.pm.scGas=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
-    +'<div class="f"><label>Fiksuota sąnauda, €/val.</label><input type="text" readonly value="'+pmF(Fh,1)+'"></div></div>';
-  h+='<div style="margin-top:8px;font-size:.72rem;color:var(--text-muted);line-height:1.6">'
-    +(fit?'Dujos pagal temperatūrą: '+fit.n+' pamainų regresija, ≈ '+pmF(toM3(fit.at(T)),0)+' m³/val. prie '+T+' °C (kiekvienas °C šalčiau ≈ '+pmF(toM3(-fit.b),1)+' m³/val., R² '+pmF(fit.r2,2)+').':'Patikimos dujų–temperatūros priklausomybės dar nėra (reikia ≥ 4 pamainų su valandiniu „Energija“ žurnalu) – dujos imamos iš paskutinės pamainos ('+last.date+').')
-    +' Fiksuota sąnauda = darbas + dujos + elektra už veikimo valandą (nepriklauso nuo pralaidumo).</div>';
+    +'<div class="f"><label>Dujos kintamai, m³ / perdirbamą t</label><input type="number" step="0.1" value="'+pmF(S.pm.scGv!=null?S.pm.scGv:toM3(gA),1).replace(",",".")+'" onchange="S.pm.scGv=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
+    +'<div class="f"><label>Dujos pastoviai, m³/val.</label><input type="number" step="1" value="'+Math.round(S.pm.scGf!=null?S.pm.scGf:toM3(fA))+'" onchange="S.pm.scGf=this.value===\'\'?null:parseFloat(this.value);R()"></div>'
+    +'<div class="f"><label>Pastovi sąnauda, €/val.</label><input type="text" readonly value="'+pmF(Fh,1)+'"></div>'
+    +'<div class="f"><label>Pastovi dujų dalis, kai regresijos nėra, %</label><input type="number" step="1" min="0" max="90" value="'+Math.round(pmGFix()*100)+'" onchange="try{localStorage.setItem(\'pm_gfix\',this.value)}catch(e){};S._gmKey=null;R()"></div></div>';
+  h+='<div style="margin-top:8px;font-size:.72rem;color:var(--text-muted);line-height:1.6">Dujos skaičiuojamos kaip kintama sąnauda pagal <b>perdirbamą masę</b> (produktas + atsijos), nes jos daugiausia išgarina vandenį, ir nedidelė pastovi dalis €/val. '
+    +(mdl?'Koeficientai iš '+mdl.n+' pamainų regresijos (R² '+pmF(mdl.r2,2)+'): dujos ≈ '+pmF(toM3(mdl.a),0)+' + '+pmF(toM3(mdl.g),1)+' × perdirbama t/val. '+(mdl.c<0?'− '+pmF(toM3(-mdl.c),1):'+ '+pmF(toM3(mdl.c),1))+' × °C (m³/val.).':'Patikimos regresijos dar nėra (reikia ≥ 6 pamainų su atsijų dalimi, temperatūra ir „Energija“ žurnalu), todėl imta paskutinė pamaina ('+last.date+') ir pastovi dalis '+pmF(pmGFix()*100,0)+' %.')
+    +' Laukelius galima keisti ranka; ištrynus grįžtama prie automatinių. Linijos riba – P = '+PM_CAP+' t/val. perdirbamos masės.</div>';
   h+='<div class="sgrp-t" style="margin-top:16px">Pelnas €/t pagal gatavo produkto pralaidumą (t/val.) ir atsijų dalį</div>';
   const cols=[3.5,4,4.5,5,5.5,6];
   const lt=last.thr!==null?Math.round(last.thr*100)/100:null;
   if(lt!==null){for(let i=cols.length-1;i>=0;i--)if(Math.abs(cols[i]-lt)<0.12)cols.splice(i,1);cols.push(lt)}
   cols.sort((a,b)=>a-b);
   h+='<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">u \\ t/val.</th>'+cols.map(c=>'<th '+thS+'>'+pmF(c,2)+(last.thr!==null&&Math.abs(c-last.thr)<0.006?' ●':'')+'</th>').join('')+'</tr></thead><tbody>';
-  us.forEach(u=>{h+='<tr><td style="padding:6px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%</td>'+cols.map(c=>{const v=pmProfitAt(u,c,Fh,s);return'<td '+cellS+';'+col(v)+'">'+pmF(v,1)+'</td>'}).join('')+'</tr>'});
-  h+='</tbody></table></div></div>';
-  h+='<div class="sgrp-t" style="margin-top:16px">Nulinio pelno pralaidumas, t/val.</div><div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr>'+us.map(u=>'<th '+thS+'>u '+pmF(u*100,0)+'%</th>').join('')+'</tr></thead><tbody><tr>'+us.map(u=>{const v=pmBreakAt(u,Fh,s);return'<td '+cellS+'">'+(v===null?'nėra':pmF(v,2))+'</td>'}).join('')+'</tr></tbody></table></div></div>';
-  h+='<div class="sgrp-t" style="margin-top:16px">Kai apdorojamos masės greitis P fiksuotas: gatavas produktas = P × (1 − u)</div>';
-  const Ps=[6,6.5,7,7.5];
+  us.forEach(u=>{h+='<tr><td style="padding:6px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%</td>'+cols.map(c=>{if(c>PM_CAP*(1-u)+1e-9)return'<td '+cellS+';color:var(--text-muted)">—</td>';const v=pmProfitAt(u,c,Fh,s);return'<td '+cellS+';'+col(v)+'">'+pmF(v,1)+'</td>'}).join('')+'</tr>'});
+  h+='</tbody></table></div></div><div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">„—“ – virš linijos ribos (perdirbama masė > '+PM_CAP+' t/val.).</div>';
+  h+='<div class="sgrp-t" style="margin-top:16px">Nulinio pelno pralaidumas, t/val. (gatavo produkto)</div><div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr>'+us.map(u=>'<th '+thS+'>u '+pmF(u*100,0)+'%</th>').join('')+'</tr></thead><tbody><tr>'+us.map(u=>{const v=pmBreakAt(u,Fh,s),ok=v!==null&&v<=PM_CAP*(1-u);return'<td '+cellS+';color:'+(ok?'var(--ok)':'var(--danger)')+'">'+pmBeTxt(v,u,PM_CAP)+'</td>'}).join('')+'</tr><tr>'+us.map(u=>'<td '+cellS+';color:var(--text-muted)">max '+pmF(PM_CAP*(1-u),2)+'</td>').join('')+'</tr></tbody></table></div></div>';
+  const uR=pmUReach(Fh,s,PM_CAP);
+  h+='<div style="font-size:.72rem;margin-top:6px;line-height:1.6;color:'+(uR!==null?'var(--text)':'var(--danger)')+'">'+(uR!==null?'Esant šioms kainoms ir dujų sąnaudoms, be nuostolio galima dirbti tik tada, kai atsijų dalis ≤ <b>'+pmF(uR*100,0)+'%</b> ir linija perdirba ~'+PM_CAP+' t/val.':'Esant šioms kainoms ir dujų sąnaudoms be nuostolio dirbti nepavyks net su mažomis atsijomis ir pilnu linijos našumu.')+'</div>';
+  h+='<div class="sgrp-t" style="margin-top:16px">Kai perdirbamos masės greitis P fiksuotas: gatavas produktas = P × (1 − u)</div>';
+  const Ps=[5,6,6.5,7];
   if(last.thr!==null&&last.u!==null){const p0=Math.round(last.thr/(1-last.u)*100)/100;for(let i=Ps.length-1;i>=0;i--)if(Math.abs(Ps[i]-p0)<0.12)Ps.splice(i,1);Ps.push(p0)}
   Ps.sort((a,b)=>a-b);
   h+='<div class="tw"><div class="ts" style="max-height:none"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-dim);font-size:.7rem;border-bottom:1px solid var(--border)">u \\ P, t/val.</th>'+Ps.map(p=>'<th '+thS+'>'+pmF(p,2)+'</th>').join('')+'</tr></thead><tbody>';
   us.forEach(u=>{h+='<tr><td style="padding:6px 8px;font-family:var(--mono);font-size:.76rem">'+pmF(u*100,0)+'%</td>'+Ps.map(p=>{const v=pmProfitAt(u,p*(1-u),Fh,s);return'<td '+cellS+';'+col(v)+'">'+pmF(v,1)+'</td>'}).join('')+'</tr>'});
-  h+='</tbody></table></div></div><div style="margin-top:10px;font-size:.7rem;color:var(--text-muted);line-height:1.6">Modelis: pelnas €/t = pardavimo kaina − (žaliava + kitos + maišai + rišiklis/(1 − u) + fiksuota sąnauda / pralaidumas). Kainos keičiamos skiltyje „Nust.“. ● – paskutinės pamainos faktinis pralaidumas.</div></div>';
+  h+='</tbody></table></div></div><div style="margin-top:10px;font-size:.7rem;color:var(--text-muted);line-height:1.6">Modelis: pelnas €/t = pardavimo kaina − (žaliava + kitos + maišai + (rišiklis + dujos kintamai)/(1 − u) + pastovi sąnauda / pralaidumas). Pastovi sąnauda = darbas + pastovi dujų dalis + elektra. Kainos keičiamos skiltyje „Nust.“. ● – paskutinės pamainos faktinis pralaidumas.</div></div>';
   return h;
 }
 function rProfit(){
@@ -1599,7 +1641,7 @@ function rPmCfg(){
 // ── Render ──
 function R(){
   const a=$("#app");if(!S.url){a.innerHTML=rSetup();return}
-  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-23a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
+  let h='<div class="app"><div class="header"><div class="header-left"><h1>KALK V Gamyba</h1><div class="sub">UAB Mortar Akmen\u0117 <span style="opacity:.5;font-size:.9em">v2026-11-24a</span></div></div><div class="badge"><div class="dot"></div>Sheets</div></div>';
   h+='<div class="nav"><button class="'+(S.view==="form"?"active":"")+'" onclick="S.view=\'form\';R()">\u270F\uFE0F \u012Evedimas</button>';
   h+='<button class="'+(S.view==="table"?"active":"")+'" onclick="S.view=\'table\';R()">\uD83D\uDCCB Duomenys</button>';
   h+='<button class="'+(S.view==="charts"?"active":"")+'" onclick="S.view=\'charts\';R()">\uD83D\uDCC8 Ataskaitos</button>';
